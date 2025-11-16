@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div id="page" class="container">
+  <h1>Артериальное давление и пульс</h1>
+
+  <form id="entry-form"
+        action="/add" method="post"
+        hx-post="/add" hx-target="#page" hx-swap="outerHTML" hx-disabled-elt="button">
+    <input name="line" type="text" placeholder="Например: 120 80 56" inputmode="numeric" />
+    <button type="submit">Сохранить</button>
+  </form>
+
+  <div class="status">{{ status_msg or "" }}</div>
+  <div class="meta">Записей: {{ entries_count }}</div>
+
+  <div id="charts" class="charts">
+    <img class="chart" alt="Давление и пульс" src="/chart/combined.png?cb={{ cache_bust }}" />
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,12 @@
+:root { color-scheme: light dark; }
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 16px; }
+.container { max-width: 800px; margin: 0 auto; }
+h1 { font-size: 1.2rem; margin: 0 0 12px; }
+form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+input[type="text"] { flex: 1 1 220px; padding: 8px; font-size: 16px; }
+button { padding: 8px 12px; font-size: 16px; }
+.status { min-height: 1.2em; color: #666; margin-bottom: 6px; }
+.meta { font-size: 0.9rem; color: #666; margin-bottom: 12px; }
+.charts { display: flex; flex-direction: column; gap: 12px; }
+.chart { width: 100%; height: auto; }
+@media (max-width: 420px) { .chart { } }
