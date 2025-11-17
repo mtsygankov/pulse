@@ -7,6 +7,7 @@ import os, io, json, time, fcntl, datetime
 from zoneinfo import ZoneInfo
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -25,20 +26,26 @@ TZ_CHART = ZoneInfo("Asia/Shanghai")  # UTC+8
 TZ_UTC = datetime.timezone.utc
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+app.mount(
+    "/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static"
+)
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
 
 def ensure_data_file():
     if not os.path.exists(DATA_FILE):
         with open(DATA_FILE, "w", encoding="utf-8"):
             pass
 
+
 def now_utc_iso():
     return datetime.datetime.now(TZ_UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
 
 def parse_iso_utc(s: str) -> datetime.datetime:
     # '...Z' -> aware UTC
     return datetime.datetime.fromisoformat(s.replace("Z", "+00:00"))
+
 
 def read_all():
     ensure_data_file()
@@ -56,6 +63,7 @@ def read_all():
     items.sort(key=lambda x: x.get("t", ""))
     return items
 
+
 def append_entry(entry: dict):
     ensure_data_file()
     with open(DATA_FILE, "a", encoding="utf-8") as f:
@@ -64,6 +72,7 @@ def append_entry(entry: dict):
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
         finally:
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
 
 def validate_values(sys_bp: int, dia_bp: int, pulse: int):
     if not (SYS_MIN <= sys_bp <= SYS_MAX):
@@ -74,6 +83,7 @@ def validate_values(sys_bp: int, dia_bp: int, pulse: int):
         raise ValueError(f"Пульс вне диапазона {PUL_MIN}-{PUL_MAX}")
     if dia_bp > sys_bp:
         raise ValueError("Диастолическое не может быть больше систолического")
+
 
 def plot_pressure(entries):
     # Готовим данные
@@ -93,8 +103,10 @@ def plot_pressure(entries):
             max(max(sys_vals), max(dia_vals)) + 5,
         )
         ax2.set_ylim(min(pulse_vals) - 5, max(pulse_vals) + 5)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d %H:%M", tz=TZ_CHART))
-        fig.autofmt_xdate()
+        ax.xaxis.set_major_formatter(
+            mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=TZ_CHART)
+        )
+        ax.tick_params(axis="x", rotation=0, labelsize=6)
     ax.set_ylabel("мм рт. ст.")
     ax2.set_ylabel("уд/мин")
     ax.grid(True, linestyle=":", alpha=0.5)
@@ -122,6 +134,7 @@ def index(request: Request, status_msg: str | None = None):
             "cache_bust": cache_bust,
         },
     )
+
 
 @app.post("/add")
 def add(
@@ -165,9 +178,9 @@ def add(
     # Иначе — обычный PRG (POST/Redirect/GET)
     return RedirectResponse(url=f"/?status_msg={status_msg}", status_code=303)
 
+
 @app.get("/chart/combined.png")
 def chart_combined():
     entries = read_all()
     buf = plot_pressure(entries)
     return StreamingResponse(buf, media_type="image/png")
-
