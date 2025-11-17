@@ -116,6 +116,7 @@ def validate_values(sys_bp: int, dia_bp: int, pulse: int):
 def plot_pressure(entries):
     # Готовим данные
     times = [parse_iso_utc(e["t"]).astimezone(TZ_CHART) for e in entries]
+    times_num = mdates.date2num(times)
     sys_vals = [e["sys"] for e in entries]
     dia_vals = [e["dia"] for e in entries]
     pulse_vals = [e["pulse"] for e in entries]
@@ -123,9 +124,9 @@ def plot_pressure(entries):
     fig, ax = plt.subplots(figsize=(8, 3))  # адаптивно ужмётся по CSS
     ax2 = ax.twinx()
     if times:
-        ax.plot(times, sys_vals, color="#d32f2f", label="Систолическое", linewidth=2)
-        ax.plot(times, dia_vals, color="#1976d2", label="Диастолическое", linewidth=2)
-        ax2.plot(times, pulse_vals, color="#388e3c", label="Пульс", linewidth=2)
+        # Temporary invisible bars to set axis limits
+        temp_bars = ax.bar(times_num, height=[s - d for s, d in zip(sys_vals, dia_vals)], bottom=dia_vals, width=0.005, alpha=0, color="#d32f2f")
+        ax2.plot(times_num, pulse_vals, color="#388e3c", label="Пульс", linewidth=2)
         ax.set_ylim(
             min(min(sys_vals), min(dia_vals)) - 5,
             max(max(sys_vals), max(dia_vals)) + 5,
@@ -135,11 +136,32 @@ def plot_pressure(entries):
             mdates.DateFormatter("%Y-%m-%d\n%H:%M")
         )
         ax.tick_params(axis="x", rotation=0, labelsize=6)
-    ax.set_ylabel("мм рт. ст.")
-    ax2.set_ylabel("уд/мин")
+        ax.tick_params(axis='y', colors='red')
+        ax2.tick_params(axis='y', colors='green')
+        fig.tight_layout()
+        # Calculate bar width for 5 pixels
+        xlim = ax.get_xlim()
+        pos = ax.get_position()
+        fig_width, fig_height = fig.get_size_inches()
+        dpi = fig.dpi
+        axis_width_pixels = pos.width * fig_width * dpi
+        data_range = xlim[1] - xlim[0]
+        data_per_pixel = data_range / axis_width_pixels
+        bar_width = 10 * data_per_pixel
+        # Remove temp bars
+        for bar in temp_bars:
+            bar.remove()
+        # Redraw bars with calculated width
+        ax.bar(times_num, height=[s - d for s, d in zip(sys_vals, dia_vals)], bottom=dia_vals, width=bar_width, alpha=0.7, color="#d32f2f", label="Кровяное давление")
+        # Add text labels after redrawing
+        for i in range(len(times_num)):
+            ax.text(times_num[i], sys_vals[i] + 2, str(sys_vals[i]), ha='center', va='bottom', fontsize=5, color='black')
+            ax.text(times_num[i], dia_vals[i] - 2, str(dia_vals[i]), ha='center', va='top', fontsize=5, color='black')
+    ax.set_ylabel("мм рт. ст.", color='red')
+    ax2.set_ylabel("уд/мин", color='green')
     ax.grid(True, linestyle=":", alpha=0.5)
-    ax.legend(loc="upper left")
-    ax2.legend(loc="upper right")
+    # ax.legend(loc="upper left")
+    # ax2.legend(loc="upper right")
     fig.tight_layout()
 
     buf = io.BytesIO()
