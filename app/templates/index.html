@@ -16,6 +16,28 @@
   <div id="charts" class="charts">
     <img class="chart" alt="Давление и пульс" src="/chart/combined.png?cb={{ cache_bust }}" />
   </div>
+
+  <div class="measurements">
+    <h2>Измерения по дням</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Morning</th>
+          <th>Evening</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for day in grouped_data %}
+        <tr>
+          <td>{{ day.date }}</td>
+          <td>{% if day.morning %}{{ day.morning.sys }}/{{ day.morning.dia }} {{ day.morning.pulse }}{% endif %}</td>
+          <td>{% if day.evening %}{{ day.evening.sys }}/{{ day.evening.dia }} {{ day.evening.pulse }}{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}
 

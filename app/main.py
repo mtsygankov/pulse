@@ -23,6 +23,7 @@ DIA_MIN, DIA_MAX = 40, 150
 PUL_MIN, PUL_MAX = 30, 220
 
 TZ_CHART = ZoneInfo("Asia/Shanghai")  # UTC+8
+TZ_GROUP = ZoneInfo("Asia/Shanghai")  # UTC+8
 TZ_UTC = datetime.timezone.utc
 
 app = FastAPI()
@@ -62,6 +63,33 @@ def read_all():
     # сортировка по времени
     items.sort(key=lambda x: x.get("t", ""))
     return items
+
+
+def group_measurements_by_date(entries):
+    from collections import defaultdict
+    grouped = defaultdict(list)
+    for entry in entries:
+        dt_utc = parse_iso_utc(entry["t"])
+        dt_group = dt_utc.astimezone(TZ_GROUP)
+        date_str = dt_group.strftime("%Y-%m-%d")
+        grouped[date_str].append((dt_group, entry))
+    # Sort dates
+    sorted_dates = sorted(grouped.keys())
+    result = []
+    for date in sorted_dates:
+        measurements = grouped[date]
+        # Sort by time
+        measurements.sort(key=lambda x: x[0])
+        morning_measurements = [m for m in measurements if m[0].hour < 12]
+        evening_measurements = [m for m in measurements if m[0].hour >= 12]
+        morning = morning_measurements[0][1] if morning_measurements else None
+        evening = evening_measurements[-1][1] if evening_measurements else None
+        result.append({
+            'date': date,
+            'morning': morning,
+            'evening': evening
+        })
+    return result
 
 
 def append_entry(entry: dict):
@@ -104,7 +132,7 @@ def plot_pressure(entries):
         )
         ax2.set_ylim(min(pulse_vals) - 5, max(pulse_vals) + 5)
         ax.xaxis.set_major_formatter(
-            mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=TZ_CHART)
+            mdates.DateFormatter("%Y-%m-%d\n%H:%M")
         )
         ax.tick_params(axis="x", rotation=0, labelsize=6)
     ax.set_ylabel("мм рт. ст.")
@@ -124,6 +152,7 @@ def plot_pressure(entries):
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, status_msg: str | None = None):
     entries = read_all()
+    grouped_data = group_measurements_by_date(entries)
     cache_bust = int(time.time())
     return templates.TemplateResponse(
         "index.html",
@@ -132,6 +161,7 @@ def index(request: Request, status_msg: str | None = None):
             "entries_count": len(entries),
             "status_msg": status_msg,
             "cache_bust": cache_bust,
+            "grouped_data": grouped_data,
         },
     )
 
@@ -165,6 +195,7 @@ def add(
     # Если запрос сделан через HTMX, вернём заново главную страницу для частичной замены
     if request.headers.get("HX-Request") == "true":
         entries = read_all()
+        grouped_data = group_measurements_by_date(entries)
         cache_bust = int(time.time())
         return templates.TemplateResponse(
             "index.html",
@@ -173,6 +204,7 @@ def add(
                 "entries_count": len(entries),
                 "status_msg": status_msg,
                 "cache_bust": cache_bust,
+                "grouped_data": grouped_data,
             },
         )
     # Иначе — обычный PRG (POST/Redirect/GET)
