@@ -149,6 +149,17 @@ def plot_pressure(entries):
     fig, ax = plt.subplots(figsize=(8, 3))  # адаптивно ужмётся по CSS
     ax2 = ax.twinx()
     if times:
+        # Add night shading
+        dates = set(dt.date() for dt in times)
+        for date in dates:
+            # Evening shading 18:00 to 24:00
+            start_eve = datetime.datetime.combine(date, datetime.time(18, 0), tzinfo=TZ_CHART)
+            end_eve = datetime.datetime.combine(date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART)
+            ax.axvspan(float(mdates.date2num(start_eve)), float(mdates.date2num(end_eve)), color='lightgrey', alpha=0.3)
+            # Morning shading 00:00 to 06:00 next day
+            start_mor = datetime.datetime.combine(date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART)
+            end_mor = datetime.datetime.combine(date + datetime.timedelta(days=1), datetime.time(6, 0), tzinfo=TZ_CHART)
+            ax.axvspan(float(mdates.date2num(start_mor)), float(mdates.date2num(end_mor)), color='lightgrey', alpha=0.3)
         # Temporary invisible bars to set axis limits
         temp_bars = ax.bar(times_num, height=[s - d for s, d in zip(sys_vals, dia_vals)], bottom=dia_vals, width=0.005, alpha=0, color="#d32f2f")
         ax2.plot(times_num, pulse_vals, color="#388e3c", label="Пульс", linewidth=2)
