@@ -80,16 +80,30 @@ def group_measurements_by_date(entries):
         measurements = grouped[date]
         # Sort by time
         measurements.sort(key=lambda x: x[0])
-        morning_measurements = [m for m in measurements if m[0].hour < 12]
-        evening_measurements = [m for m in measurements if m[0].hour >= 12]
+        morning_measurements = [m for m in measurements if 7 <= m[0].hour < 12]
+        evening_measurements = [m for m in measurements if m[0].hour >= 21]
         morning = morning_measurements[0][1] if morning_measurements else None
-        evening = evening_measurements[-1][1] if evening_measurements else None
+        evening = evening_measurements[0][1] if evening_measurements else None
         result.append({
             'date': date,
             'morning': morning,
             'evening': evening
         })
     return result
+
+
+def get_highlighted_timestamps(entries):
+    grouped = group_measurements_by_date(entries)
+    morning_ts = set()
+    for day in grouped:
+        if day['morning']:
+            morning_ts.add(day['morning']['t'])
+
+    evening_ts = set()
+    for day in grouped:
+        if day['evening']:
+            evening_ts.add(day['evening']['t'])
+    return morning_ts, evening_ts
 
 
 def append_entry(entry: dict):
@@ -120,6 +134,17 @@ def plot_pressure(entries):
     sys_vals = [e["sys"] for e in entries]
     dia_vals = [e["dia"] for e in entries]
     pulse_vals = [e["pulse"] for e in entries]
+
+    # Определяем цвета для утренних и вечерних измерений
+    morning_ts, evening_ts = get_highlighted_timestamps(entries)
+    colors = []
+    for e in entries:
+        if e['t'] in morning_ts:
+            colors.append("#ffeb3b")
+        elif e['t'] in evening_ts:
+            colors.append("#4caf50")
+        else:
+            colors.append("#d32f2f")
 
     fig, ax = plt.subplots(figsize=(8, 3))  # адаптивно ужмётся по CSS
     ax2 = ax.twinx()
@@ -152,7 +177,7 @@ def plot_pressure(entries):
         for bar in temp_bars:
             bar.remove()
         # Redraw bars with calculated width
-        ax.bar(times_num, height=[s - d for s, d in zip(sys_vals, dia_vals)], bottom=dia_vals, width=bar_width, alpha=0.7, color="#d32f2f", label="Кровяное давление")
+        ax.bar(times_num, height=[s - d for s, d in zip(sys_vals, dia_vals)], bottom=dia_vals, width=bar_width, alpha=0.7, color=colors, label="Кровяное давление")
         # Add text labels after redrawing
         for i in range(len(times_num)):
             ax.text(times_num[i], sys_vals[i] + 2, str(sys_vals[i]), ha='center', va='bottom', fontsize=5, color='black')
