@@ -266,7 +266,7 @@ def add(
             },
         )
     # Иначе — обычный PRG (POST/Redirect/GET)
-    return RedirectResponse(url=f"/?status_msg={status_msg}", status_code=303)
+    return RedirectResponse(url="/", status_code=303)
 
 
 @app.get("/chart/combined.png")
