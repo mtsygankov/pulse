@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -274,3 +274,16 @@ def chart_combined():
     entries = read_all()
     buf = plot_pressure(entries)
     return StreamingResponse(buf, media_type="image/png")
+
+@app.get("/json")
+def dump():
+    entries = read_all()
+    return entries
+
+@app.get("/dump")
+def dump_raw():
+    if not os.path.exists(DATA_FILE):
+        return Response("", media_type="text/plain")
+    with open(DATA_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+    return Response(content, media_type="text/plain")
