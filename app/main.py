@@ -140,11 +140,11 @@ def plot_pressure(entries):
     colors = []
     for e in entries:
         if e['t'] in morning_ts:
-            colors.append("#ffeb3b")
+            colors.append("#ffd52b")
         elif e['t'] in evening_ts:
             colors.append("#4caf50")
         else:
-            colors.append("#d32f2f")
+            colors.append("#808080")#"#ff6f6f")
 
     fig, ax = plt.subplots(figsize=(8, 3))  # адаптивно ужмётся по CSS
     ax2 = ax.twinx()
@@ -169,7 +169,7 @@ def plot_pressure(entries):
         )
         ax2.set_ylim(min(pulse_vals) - 5, max(pulse_vals) + 5)
         ax.xaxis.set_major_formatter(
-            mdates.DateFormatter("%Y-%m-%d\n%H:%M")
+            mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=TZ_CHART)
         )
         ax.tick_params(axis="x", rotation=0, labelsize=6)
         ax.tick_params(axis='y', colors='red')
@@ -183,7 +183,7 @@ def plot_pressure(entries):
         axis_width_pixels = pos.width * fig_width * dpi
         data_range = xlim[1] - xlim[0]
         data_per_pixel = data_range / axis_width_pixels
-        bar_width = 10 * data_per_pixel
+        bar_width = 7 * data_per_pixel
         # Remove temp bars
         for bar in temp_bars:
             bar.remove()
