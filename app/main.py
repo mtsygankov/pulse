@@ -193,8 +193,8 @@ def plot_pressure(entries):
         for i in range(len(times_num)):
             ax.text(times_num[i], sys_vals[i] + 2, str(sys_vals[i]), ha='center', va='bottom', fontsize=5, color='black')
             ax.text(times_num[i], dia_vals[i] - 2, str(dia_vals[i]), ha='center', va='top', fontsize=5, color='black')
-    ax.set_ylabel("мм рт. ст.", color='red')
-    ax2.set_ylabel("уд/мин", color='green')
+    ax.set_ylabel("mmHg", color='red')
+    ax2.set_ylabel("bpm", color='green')
     ax.grid(True, linestyle=":", alpha=0.5)
     # ax.legend(loc="upper left")
     # ax2.legend(loc="upper right")
