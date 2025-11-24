@@ -1,5 +1,10 @@
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, Response
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+    StreamingResponse,
+    Response,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -67,6 +72,7 @@ def read_all():
 
 def group_measurements_by_date(entries):
     from collections import defaultdict
+
     grouped = defaultdict(list)
     for entry in entries:
         dt_utc = parse_iso_utc(entry["t"])
@@ -84,11 +90,7 @@ def group_measurements_by_date(entries):
         evening_measurements = [m for m in measurements if m[0].hour >= 21]
         morning = morning_measurements[0][1] if morning_measurements else None
         evening = evening_measurements[0][1] if evening_measurements else None
-        result.append({
-            'date': date,
-            'morning': morning,
-            'evening': evening
-        })
+        result.append({"date": date, "morning": morning, "evening": evening})
     return result
 
 
@@ -96,13 +98,13 @@ def get_highlighted_timestamps(entries):
     grouped = group_measurements_by_date(entries)
     morning_ts = set()
     for day in grouped:
-        if day['morning']:
-            morning_ts.add(day['morning']['t'])
+        if day["morning"]:
+            morning_ts.add(day["morning"]["t"])
 
     evening_ts = set()
     for day in grouped:
-        if day['evening']:
-            evening_ts.add(day['evening']['t'])
+        if day["evening"]:
+            evening_ts.add(day["evening"]["t"])
     return morning_ts, evening_ts
 
 
@@ -127,6 +129,15 @@ def validate_values(sys_bp: int, dia_bp: int, pulse: int):
         raise ValueError("Диастолическое не может быть больше систолического")
 
 
+def compute_median_avg(vals: list[int]) -> int:
+    sorted_vals = sorted(vals)
+    n = len(sorted_vals)
+    if n % 2 == 0:
+        return round((sorted_vals[n // 2 - 1] + sorted_vals[n // 2]) / 2)
+    else:
+        return sorted_vals[n // 2]
+
+
 def plot_pressure(entries):
     # Готовим данные
     times = [parse_iso_utc(e["t"]).astimezone(TZ_CHART) for e in entries]
@@ -139,12 +150,12 @@ def plot_pressure(entries):
     morning_ts, evening_ts = get_highlighted_timestamps(entries)
     colors = []
     for e in entries:
-        if e['t'] in morning_ts:
+        if e["t"] in morning_ts:
             colors.append("#ffd52b")
-        elif e['t'] in evening_ts:
+        elif e["t"] in evening_ts:
             colors.append("#4caf50")
         else:
-            colors.append("#808080")#"#ff6f6f")
+            colors.append("#808080")  # "#ff6f6f")
 
     fig, ax = plt.subplots(figsize=(8, 3))  # адаптивно ужмётся по CSS
     ax2 = ax.twinx()
@@ -153,15 +164,40 @@ def plot_pressure(entries):
         dates = set(dt.date() for dt in times)
         for date in dates:
             # Evening shading 18:00 to 24:00
-            start_eve = datetime.datetime.combine(date, datetime.time(18, 0), tzinfo=TZ_CHART)
-            end_eve = datetime.datetime.combine(date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART)
-            ax.axvspan(float(mdates.date2num(start_eve)), float(mdates.date2num(end_eve)), color='lightgrey', alpha=0.3)
+            start_eve = datetime.datetime.combine(
+                date, datetime.time(18, 0), tzinfo=TZ_CHART
+            )
+            end_eve = datetime.datetime.combine(
+                date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART
+            )
+            ax.axvspan(
+                float(mdates.date2num(start_eve)),
+                float(mdates.date2num(end_eve)),
+                color="lightgrey",
+                alpha=0.3,
+            )
             # Morning shading 00:00 to 06:00 next day
-            start_mor = datetime.datetime.combine(date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART)
-            end_mor = datetime.datetime.combine(date + datetime.timedelta(days=1), datetime.time(6, 0), tzinfo=TZ_CHART)
-            ax.axvspan(float(mdates.date2num(start_mor)), float(mdates.date2num(end_mor)), color='lightgrey', alpha=0.3)
+            start_mor = datetime.datetime.combine(
+                date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART
+            )
+            end_mor = datetime.datetime.combine(
+                date + datetime.timedelta(days=1), datetime.time(6, 0), tzinfo=TZ_CHART
+            )
+            ax.axvspan(
+                float(mdates.date2num(start_mor)),
+                float(mdates.date2num(end_mor)),
+                color="lightgrey",
+                alpha=0.3,
+            )
         # Temporary invisible bars to set axis limits
-        temp_bars = ax.bar(times_num, height=[s - d for s, d in zip(sys_vals, dia_vals)], bottom=dia_vals, width=0.005, alpha=0, color="#d32f2f")
+        temp_bars = ax.bar(
+            times_num,
+            height=[s - d for s, d in zip(sys_vals, dia_vals)],
+            bottom=dia_vals,
+            width=0.005,
+            alpha=0,
+            color="#d32f2f",
+        )
         ax2.plot(times_num, pulse_vals, color="#388e3c", label="Пульс", linewidth=2)
         ax.set_ylim(
             min(min(sys_vals), min(dia_vals)) - 5,
@@ -172,8 +208,8 @@ def plot_pressure(entries):
             mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=TZ_CHART)
         )
         ax.tick_params(axis="x", rotation=0, labelsize=6)
-        ax.tick_params(axis='y', colors='red')
-        ax2.tick_params(axis='y', colors='green')
+        ax.tick_params(axis="y", colors="red")
+        ax2.tick_params(axis="y", colors="green")
         fig.tight_layout()
         # Calculate bar width for 5 pixels
         xlim = ax.get_xlim()
@@ -188,13 +224,37 @@ def plot_pressure(entries):
         for bar in temp_bars:
             bar.remove()
         # Redraw bars with calculated width
-        ax.bar(times_num, height=[s - d for s, d in zip(sys_vals, dia_vals)], bottom=dia_vals, width=bar_width, alpha=0.7, color=colors, label="Кровяное давление")
+        ax.bar(
+            times_num,
+            height=[s - d for s, d in zip(sys_vals, dia_vals)],
+            bottom=dia_vals,
+            width=bar_width,
+            alpha=0.7,
+            color=colors,
+            label="Кровяное давление",
+        )
         # Add text labels after redrawing
         for i in range(len(times_num)):
-            ax.text(times_num[i], sys_vals[i] + 2, str(sys_vals[i]), ha='center', va='bottom', fontsize=5, color='black')
-            ax.text(times_num[i], dia_vals[i] - 2, str(dia_vals[i]), ha='center', va='top', fontsize=5, color='black')
-    ax.set_ylabel("mmHg", color='red')
-    ax2.set_ylabel("bpm", color='green')
+            ax.text(
+                times_num[i],
+                sys_vals[i] + 2,
+                str(sys_vals[i]),
+                ha="center",
+                va="bottom",
+                fontsize=5,
+                color="black",
+            )
+            ax.text(
+                times_num[i],
+                dia_vals[i] - 2,
+                str(dia_vals[i]),
+                ha="center",
+                va="top",
+                fontsize=5,
+                color="black",
+            )
+    ax.set_ylabel("mmHg", color="red")
+    ax2.set_ylabel("bpm", color="green")
     ax.grid(True, linestyle=":", alpha=0.5)
     # ax.legend(loc="upper left")
     # ax2.legend(loc="upper right")
@@ -232,23 +292,39 @@ def add(
     dia_bp: int | None = Form(default=None),
     pulse: int | None = Form(default=None),
 ):
+    input_value = None
     try:
         if line:
             parts = line.strip().split()
-            if len(parts) != 3:
-                raise ValueError('Формат ввода: "SYS DIA PULSE"')
-            sys_v, dia_v, pul_v = map(int, parts)
+            if len(parts) % 3 != 0:
+                raise ValueError(
+                    "Ввод должен содержать кратное 3 значениям (SYS DIA PULSE)"
+                )
+            num_measurements = len(parts) // 3
+            sys_list = [int(parts[i * 3]) for i in range(num_measurements)]
+            dia_list = [int(parts[i * 3 + 1]) for i in range(num_measurements)]
+            pulse_list = [int(parts[i * 3 + 2]) for i in range(num_measurements)]
+            # Validate each triple
+            for i in range(num_measurements):
+                validate_values(sys_list[i], dia_list[i], pulse_list[i])
+            # Compute aggregated values
+            sys_v = compute_median_avg(sys_list)
+            dia_v = compute_median_avg(dia_list)
+            pul_v = compute_median_avg(pulse_list)
+            # Validate aggregated values
+            validate_values(sys_v, dia_v, pul_v)
         else:
             if sys_bp is None or dia_bp is None or pulse is None:
                 raise ValueError("Нужно три значения: sys, dia, pulse")
             sys_v, dia_v, pul_v = sys_bp, dia_bp, pulse
+            validate_values(sys_v, dia_v, pul_v)
 
-        validate_values(sys_v, dia_v, pul_v)
         entry = {"t": now_utc_iso(), "sys": sys_v, "dia": dia_v, "pulse": pul_v}
         append_entry(entry)
         status_msg = "Сохранено"
     except ValueError as e:
         status_msg = f"Ошибка: {e}"
+        input_value = line
 
     # Если запрос сделан через HTMX, вернём заново главную страницу для частичной замены
     if request.headers.get("HX-Request") == "true":
@@ -263,6 +339,7 @@ def add(
                 "status_msg": status_msg,
                 "cache_bust": cache_bust,
                 "grouped_data": grouped_data,
+                "input_value": input_value,
             },
         )
     # Иначе — обычный PRG (POST/Redirect/GET)
@@ -275,10 +352,12 @@ def chart_combined():
     buf = plot_pressure(entries)
     return StreamingResponse(buf, media_type="image/png")
 
+
 @app.get("/json")
 def dump():
     entries = read_all()
     return entries
+
 
 @app.get("/dump")
 def dump_raw():

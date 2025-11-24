@@ -6,7 +6,7 @@
   <form id="entry-form"
         action="/add" method="post"
         hx-post="/add" hx-target="#page" hx-swap="outerHTML" hx-disabled-elt="button">
-    <input name="line" type="text" placeholder="e.g.: 120 80 56" inputmode="numeric" />
+    <input name="line" type="text" placeholder="e.g.: 120 80 56 125 85 60" inputmode="numeric" value="{{ input_value or '' }}" />
     <button type="submit">Save</button>
   </form>
 
