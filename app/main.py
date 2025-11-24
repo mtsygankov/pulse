@@ -120,13 +120,13 @@ def append_entry(entry: dict):
 
 def validate_values(sys_bp: int, dia_bp: int, pulse: int):
     if not (SYS_MIN <= sys_bp <= SYS_MAX):
-        raise ValueError(f"Систолическое вне диапазона {SYS_MIN}-{SYS_MAX}")
+        raise ValueError(f"Systolic out of range {SYS_MIN}-{SYS_MAX}")
     if not (DIA_MIN <= dia_bp <= DIA_MAX):
-        raise ValueError(f"Диастолическое вне диапазона {DIA_MIN}-{DIA_MAX}")
+        raise ValueError(f"Diastolic out of range {DIA_MIN}-{DIA_MAX}")
     if not (PUL_MIN <= pulse <= PUL_MAX):
-        raise ValueError(f"Пульс вне диапазона {PUL_MIN}-{PUL_MAX}")
+        raise ValueError(f"Pulse out of range {PUL_MIN}-{PUL_MAX}")
     if dia_bp > sys_bp:
-        raise ValueError("Диастолическое не может быть больше систолического")
+        raise ValueError("Diastolic cannot be greater than systolic")
 
 
 def compute_median_avg(vals: list[int]) -> int:
@@ -198,7 +198,7 @@ def plot_pressure(entries):
             alpha=0,
             color="#d32f2f",
         )
-        ax2.plot(times_num, pulse_vals, color="#388e3c", label="Пульс", linewidth=2)
+        ax2.plot(times_num, pulse_vals, color="#388e3c", label="Pulse", linewidth=2)
         ax.set_ylim(
             min(min(sys_vals), min(dia_vals)) - 5,
             max(max(sys_vals), max(dia_vals)) + 5,
@@ -231,7 +231,7 @@ def plot_pressure(entries):
             width=bar_width,
             alpha=0.7,
             color=colors,
-            label="Кровяное давление",
+            label="Blood Pressure",
         )
         # Add text labels after redrawing
         for i in range(len(times_num)):
@@ -298,7 +298,7 @@ def add(
             parts = line.strip().split()
             if len(parts) % 3 != 0:
                 raise ValueError(
-                    "Ввод должен содержать кратное 3 значениям (SYS DIA PULSE)"
+                    "Input must contain a multiple of 3 values (SYS DIA PULSE)"
                 )
             num_measurements = len(parts) // 3
             sys_list = [int(parts[i * 3]) for i in range(num_measurements)]
@@ -315,15 +315,15 @@ def add(
             validate_values(sys_v, dia_v, pul_v)
         else:
             if sys_bp is None or dia_bp is None or pulse is None:
-                raise ValueError("Нужно три значения: sys, dia, pulse")
+                raise ValueError("Need three values: sys, dia, pulse")
             sys_v, dia_v, pul_v = sys_bp, dia_bp, pulse
             validate_values(sys_v, dia_v, pul_v)
 
         entry = {"t": now_utc_iso(), "sys": sys_v, "dia": dia_v, "pulse": pul_v}
         append_entry(entry)
-        status_msg = "Сохранено"
+        status_msg = "Saved"
     except ValueError as e:
-        status_msg = f"Ошибка: {e}"
+        status_msg = f"Error: {e}"
         input_value = line
 
     # Если запрос сделан через HTMX, вернём заново главную страницу для частичной замены
