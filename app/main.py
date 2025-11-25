@@ -320,6 +320,10 @@ def add(
             validate_values(sys_v, dia_v, pul_v)
 
         entry = {"t": now_utc_iso(), "sys": sys_v, "dia": dia_v, "pulse": pul_v}
+        if line: 
+            entry["raw"] = line
+        else:
+            entry["raw"] = f"sys_bp={sys_v} dia_bp={dia_v} pulse={pul_v}"
         append_entry(entry)
         status_msg = "Saved"
     except ValueError as e:
