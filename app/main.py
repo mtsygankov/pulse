@@ -17,7 +17,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-# Настройки
+# Настройки ######################################################
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(os.path.dirname(BASE_DIR), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -30,6 +30,10 @@ PUL_MIN, PUL_MAX = 30, 220
 TZ_CHART = ZoneInfo("Asia/Shanghai")  # UTC+8
 TZ_GROUP = ZoneInfo("Asia/Shanghai")  # UTC+8
 TZ_UTC = datetime.timezone.utc
+
+FIG_SIZE=(8,4)
+BAR_WIDTH = 5
+####################################################################
 
 app = FastAPI()
 app.mount(
@@ -155,9 +159,8 @@ def plot_pressure(entries):
         elif e["t"] in evening_ts:
             colors.append("#4caf50")
         else:
-            colors.append("#808080")  # "#ff6f6f")
-
-    fig, ax = plt.subplots(figsize=(8, 3))  # адаптивно ужмётся по CSS
+            colors.append("#b0b0b0")  # "#ff6f6f")
+    fig, ax = plt.subplots(figsize=FIG_SIZE)  # адаптивно ужмётся по CSS
     ax2 = ax.twinx()
     if times:
         # Add night shading
@@ -200,14 +203,14 @@ def plot_pressure(entries):
         )
         ax2.plot(times_num, pulse_vals, color="#388e3c", label="Pulse", linewidth=2)
         ax.set_ylim(
-            min(min(sys_vals), min(dia_vals)) - 5,
-            max(max(sys_vals), max(dia_vals)) + 5,
+            min(min(sys_vals), min(dia_vals)) - 10,
+            max(max(sys_vals), max(dia_vals)) + 10,
         )
         ax2.set_ylim(min(pulse_vals) - 5, max(pulse_vals) + 5)
         ax.xaxis.set_major_formatter(
-            mdates.DateFormatter("%Y-%m-%d\n%H:%M", tz=TZ_CHART)
+            mdates.DateFormatter("%b %d\n%H:%M", tz=TZ_CHART)
         )
-        ax.tick_params(axis="x", rotation=0, labelsize=6)
+        ax.tick_params(axis="x", rotation=0, labelsize=7)
         ax.tick_params(axis="y", colors="red")
         ax2.tick_params(axis="y", colors="green")
         fig.tight_layout()
@@ -219,7 +222,7 @@ def plot_pressure(entries):
         axis_width_pixels = pos.width * fig_width * dpi
         data_range = xlim[1] - xlim[0]
         data_per_pixel = data_range / axis_width_pixels
-        bar_width = 7 * data_per_pixel
+        bar_width = BAR_WIDTH * data_per_pixel
         # Remove temp bars
         for bar in temp_bars:
             bar.remove()
