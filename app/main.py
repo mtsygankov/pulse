@@ -356,10 +356,23 @@ def add(
 
 
 @app.get("/chart/combined.png")
-def chart_combined():
+def chart_combined(filter: str | None = None):
     entries = read_all()
-    buf = plot_pressure(entries)
+    if filter == "me_only":
+        morning_ts, evening_ts = get_highlighted_timestamps(entries)
+        filtered_entries = [e for e in entries if e["t"] in morning_ts or e["t"] in evening_ts]
+    else:
+        filtered_entries = entries
+    buf = plot_pressure(filtered_entries)
     return StreamingResponse(buf, media_type="image/png")
+
+
+@app.post("/update_chart")
+def update_chart(filter: str | None = Form(default=None)):
+    cache_bust = int(time.time())
+    filter_param = f"&filter={filter}" if filter else ""
+    html_content = f'<div id="charts" class="flex flex-col gap-3"><img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={cache_bust}{filter_param}" /></div>'
+    return HTMLResponse(content=html_content)
 
 
 @app.get("/json")

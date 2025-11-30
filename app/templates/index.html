@@ -10,6 +10,16 @@
     <button type="submit" class="px-3 py-1 text-base bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 px-4 py-2">Save</button>
   </form>
 
+  <button id="settings-toggle" class="px-3 py-1 text-base bg-gray-500 text-white rounded-md hover:bg-gray-600 mb-2">Settings</button>
+  <div id="settings-panel" class="hidden mt-2 p-2 border border-gray-300 rounded-md mb-2">
+    <form id="settings-form" hx-post="/update_chart" hx-target="#charts" hx-swap="outerHTML" hx-trigger="change from:input[name='filter']">
+      <label class="flex items-center gap-2">
+        <input type="checkbox" name="filter" value="me_only" class="toggle-checkbox" />
+        <span>Show only morning and evening measurements on chart</span>
+      </label>
+    </form>
+  </div>
+
   <div class="min-h-[1.2em] text-gray-600 mb-1.5">{{ status_msg or "" }}</div>
   <div class="text-sm text-gray-600 mb-3">Records: {{ entries_count }}</div>
 
@@ -49,5 +59,11 @@
     </div>
   </div>
 </div>
+<script>
+  document.getElementById('settings-toggle').addEventListener('click', function() {
+    const panel = document.getElementById('settings-panel');
+    panel.classList.toggle('hidden');
+  });
+</script>
 {% endblock %}
 
