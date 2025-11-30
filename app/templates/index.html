@@ -37,9 +37,9 @@
         {% for day in grouped_data %}
         <tr>
           <td>{{ day.date }}</td>
-          <td>{% if day.morning %}{{ day.morning.sys }}/{{ day.morning.dia }}{% endif %}</td>
+          <td>{% if day.morning %}{{ day.morning.sys }} / {{ day.morning.dia }}{% endif %}</td>
           <td>{% if day.morning %}{{ day.morning.pulse }}{% endif %}</td>
-          <td>{% if day.evening %}{{ day.evening.sys }}/{{ day.evening.dia }}{% endif %}</td>
+          <td>{% if day.evening %}{{ day.evening.sys }} / {{ day.evening.dia }}{% endif %}</td>
           <td>{% if day.evening %}{{ day.evening.pulse }}{% endif %}</td>
         </tr>
         {% endfor %}

@@ -13,9 +13,9 @@ button { padding: 8px 12px; font-size: 16px; }
 @media (max-width: 420px) { .chart { } }
 
 table { width: auto; border-collapse: separate; border-spacing: 0; border: 1px solid #ddd; margin: 12px auto 0; border-radius: 0; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
-th, td { border: 1px solid #dedede; padding: 12px; text-align: center; font-size: 14px; }
+th, td { border: 1px solid #dedede; padding: 5px 10px; text-align: center; font-size: 14px; }
 th { background-color: #cfcdcd; font-weight: 600; color: #333; }
-tbody tr:nth-child(even) { background-color: #f8f9fa; }
+tbody tr:nth-child(even) { background-color: #e1fbfc; }
 tbody tr:hover { background-color: #e9ecef; transition: background-color 0.2s ease; }
 @media (max-width: 600px) {
   table { font-size: 12px; }

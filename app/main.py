@@ -157,7 +157,7 @@ def plot_pressure(entries):
         if e["t"] in morning_ts:
             colors.append("#ffd52b")
         elif e["t"] in evening_ts:
-            colors.append("#4caf50")
+            colors.append("#989dfcff")
         else:
             colors.append("#b0b0b0")  # "#ff6f6f")
     fig, ax = plt.subplots(figsize=FIG_SIZE)  # адаптивно ужмётся по CSS
@@ -201,7 +201,7 @@ def plot_pressure(entries):
             alpha=0,
             color="#d32f2f",
         )
-        ax2.plot(times_num, pulse_vals, color="#388e3c", label="Pulse", linewidth=2)
+        ax2.plot(times_num, pulse_vals, color="red", alpha=0.4, label="Pulse", linewidth=2)
         ax.set_ylim(
             min(min(sys_vals), min(dia_vals)) - 10,
             max(max(sys_vals), max(dia_vals)) + 10,
@@ -211,8 +211,8 @@ def plot_pressure(entries):
             mdates.DateFormatter("%b %d\n%H:%M", tz=TZ_CHART)
         )
         ax.tick_params(axis="x", rotation=0, labelsize=7)
-        ax.tick_params(axis="y", colors="red")
-        ax2.tick_params(axis="y", colors="green")
+        ax.tick_params(axis="y", colors="green")
+        ax2.tick_params(axis="y", colors="red")
         fig.tight_layout()
         # Calculate bar width for 5 pixels
         xlim = ax.get_xlim()
@@ -245,7 +245,8 @@ def plot_pressure(entries):
                 ha="center",
                 va="bottom",
                 fontsize=5,
-                color="black",
+                fontdict={"weight": "bold"},
+                color="green",
             )
             ax.text(
                 times_num[i],
@@ -254,10 +255,11 @@ def plot_pressure(entries):
                 ha="center",
                 va="top",
                 fontsize=5,
-                color="black",
+                fontdict={"weight": "bold"},
+                color="green",
             )
-    ax.set_ylabel("mmHg", color="red")
-    ax2.set_ylabel("bpm", color="green")
+    ax.set_ylabel("mmHg", color="green")
+    ax2.set_ylabel("bpm", color="red")
     ax.grid(True, linestyle=":", alpha=0.5)
     # ax.legend(loc="upper left")
     # ax2.legend(loc="upper right")
