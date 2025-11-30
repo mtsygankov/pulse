@@ -1,50 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
-<div id="page" class="container">
-  <h1>Blood Pressure and Pulse</h1>
+<div id="page" class="max-w-2xl mx-auto">
+  <h1 class="text-xl mb-3">Blood Pressure and Pulse</h1>
 
-  <form id="entry-form"
+  <form id="entry-form" class="flex gap-2 flex-wrap mb-2"
         action="/add" method="post"
         hx-post="/add" hx-target="#page" hx-swap="outerHTML" hx-disabled-elt="button">
-    <input name="line" type="text" placeholder="e.g.: 120 80 56 125 85 60" inputmode="numeric" value="{{ input_value or '' }}" />
-    <button type="submit">Save</button>
+    <input name="line" type="text" class="flex-1 min-w-[220px] px-2 py-1 text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g.: 120 80 56 125 85 60" inputmode="numeric" value="{{ input_value or '' }}" />
+    <button type="submit" class="px-3 py-1 text-base bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 px-4 py-2">Save</button>
   </form>
 
-  <div class="status">{{ status_msg or "" }}</div>
-  <div class="meta">Records: {{ entries_count }}</div>
+  <div class="min-h-[1.2em] text-gray-600 mb-1.5">{{ status_msg or "" }}</div>
+  <div class="text-sm text-gray-600 mb-3">Records: {{ entries_count }}</div>
 
-  <div id="charts" class="charts">
-    <img class="chart" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={{ cache_bust }}" />
+  <div id="charts" class="flex flex-col gap-3">
+    <img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={{ cache_bust }}" />
   </div>
 
-  <div class="measurements">
-    <h2>Daily measurements</h2>
-    <table>
+  <div>
+    <h2 class="text-center">Daily measurements</h2>
+    <div class="overflow-x-auto">
+      <table class="w-auto border-collapse border border-gray-300 mx-auto mt-3 rounded-none overflow-hidden shadow-lg">
       <thead>
         <tr>
-          <th rowspan="2">Date</th>
-          <th colspan="2">Morning</th>
-          <th colspan="2">Evening</th>
+          <th rowspan="2" class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Date</th>
+          <th colspan="2" class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Morning</th>
+          <th colspan="2" class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Evening</th>
         </tr>
         <tr>
-          <th>Pressure</th>
-          <th>Pulse</th>
-          <th>Pressure</th>
-          <th>Pulse</th>
+          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Pressure</th>
+          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Pulse</th>
+          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Pressure</th>
+          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Pulse</th>
         </tr>
       </thead>
       <tbody>
         {% for day in grouped_data %}
-        <tr>
-          <td>{{ day.date }}</td>
-          <td>{% if day.morning %}{{ day.morning.sys }} / {{ day.morning.dia }}{% endif %}</td>
-          <td>{% if day.morning %}{{ day.morning.pulse }}{% endif %}</td>
-          <td>{% if day.evening %}{{ day.evening.sys }} / {{ day.evening.dia }}{% endif %}</td>
-          <td>{% if day.evening %}{{ day.evening.pulse }}{% endif %}</td>
+        <tr class="even:bg-blue-50 hover:bg-gray-100 transition-colors duration-200">
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{{ day.date }}</td>
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{% if day.morning %}{{ day.morning.sys }} / {{ day.morning.dia }}{% endif %}</td>
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{% if day.morning %}{{ day.morning.pulse }}{% endif %}</td>
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{% if day.evening %}{{ day.evening.sys }} / {{ day.evening.dia }}{% endif %}</td>
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{% if day.evening %}{{ day.evening.pulse }}{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 {% endblock %}
