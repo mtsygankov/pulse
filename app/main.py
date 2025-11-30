@@ -193,7 +193,7 @@ def plot_pressure(entries):
                 alpha=0.3,
             )
         # Temporary invisible bars to set axis limits
-        temp_bars = ax.bar(
+        temp_bars = ax2.bar(
             times_num,
             height=[s - d for s, d in zip(sys_vals, dia_vals)],
             bottom=dia_vals,
@@ -201,18 +201,18 @@ def plot_pressure(entries):
             alpha=0,
             color="#d32f2f",
         )
-        ax2.plot(times_num, pulse_vals, color="red", alpha=0.4, label="Pulse", linewidth=2)
-        ax.set_ylim(
+        ax.plot(times_num, pulse_vals, color="red", alpha=0.4, label="Pulse", linewidth=2)
+        ax2.set_ylim(
             min(min(sys_vals), min(dia_vals)) - 10,
             max(max(sys_vals), max(dia_vals)) + 10,
         )
-        ax2.set_ylim(min(pulse_vals) - 5, max(pulse_vals) + 5)
+        ax.set_ylim(min(pulse_vals) - 5, max(pulse_vals) + 5)
         ax.xaxis.set_major_formatter(
             mdates.DateFormatter("%b %d\n%H:%M", tz=TZ_CHART)
         )
         ax.tick_params(axis="x", rotation=0, labelsize=7)
-        ax.tick_params(axis="y", colors="green")
-        ax2.tick_params(axis="y", colors="red")
+        ax.tick_params(axis="y", colors="red")
+        ax2.tick_params(axis="y", colors="green")
         fig.tight_layout()
         # Calculate bar width for 5 pixels
         xlim = ax.get_xlim()
@@ -227,7 +227,7 @@ def plot_pressure(entries):
         for bar in temp_bars:
             bar.remove()
         # Redraw bars with calculated width
-        ax.bar(
+        ax2.bar(
             times_num,
             height=[s - d for s, d in zip(sys_vals, dia_vals)],
             bottom=dia_vals,
@@ -238,7 +238,7 @@ def plot_pressure(entries):
         )
         # Add text labels after redrawing
         for i in range(len(times_num)):
-            ax.text(
+            ax2.text(
                 times_num[i],
                 sys_vals[i] + 2,
                 str(sys_vals[i]),
@@ -248,7 +248,7 @@ def plot_pressure(entries):
                 fontdict={"weight": "bold"},
                 color="green",
             )
-            ax.text(
+            ax2.text(
                 times_num[i],
                 dia_vals[i] - 2,
                 str(dia_vals[i]),
@@ -258,8 +258,8 @@ def plot_pressure(entries):
                 fontdict={"weight": "bold"},
                 color="green",
             )
-    ax.set_ylabel("mmHg", color="green")
-    ax2.set_ylabel("bpm", color="red")
+    ax.set_ylabel("bpm", color="red")
+    ax2.set_ylabel("mmHg", color="green")
     ax.grid(True, linestyle=":", alpha=0.5)
     # ax.legend(loc="upper left")
     # ax2.legend(loc="upper right")
