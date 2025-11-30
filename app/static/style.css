@@ -48,3 +48,22 @@
 .toggle-checkbox:checked:before {
   left: 22px;
 }
+
+/* Mobile responsiveness for settings panel */
+@media (max-width: 480px) {
+  #settings-panel {
+    padding: 0.5rem;
+  }
+
+  #settings-panel label {
+    font-size: 0.9rem;
+  }
+
+  #settings-panel label span {
+    white-space: nowrap;
+  }
+
+  .toggle-checkbox {
+    flex-shrink: 0;
+  }
+}
