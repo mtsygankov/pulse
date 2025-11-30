@@ -2,7 +2,11 @@
 {% block content %}
 <div id="page" class="max-w-2xl mx-auto">
   <div class="flex justify-between items-center mb-3">
-    <button id="settings-toggle" class="px-2 py-1 text-base bg-gray-500 text-white rounded-md hover:bg-gray-600">&#9776;</button>
+    <button id="settings-toggle" class="px-2 py-1 text-base rounded-md">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+    <path d="M3 12h18M3 6h18M3 18h18" stroke-width="2"/>
+  </svg>
+    </button>
     <h1 class="text-xl">Blood Pressure and Pulse</h1>
   </div>
   <div id="settings-panel" class="hidden mt-2 p-2 border border-gray-300 rounded-md mb-2">
@@ -25,7 +29,7 @@
     <button type="submit" class="px-3 py-1 text-base bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 px-4 py-2">Save</button>
   </form>
 
-  <div class="min-h-[1.2em] text-gray-600 mb-1.5">{{ status_msg or "" }}</div>
+  <!--div class="min-h-[1.2em] text-gray-600 mb-1.5">{{ status_msg or "" }}</div-->
   <div class="text-sm text-gray-600 mb-3">Records: {{ entries_count }}</div>
 
   <div id="charts" class="flex flex-col gap-3">
