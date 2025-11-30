@@ -33,7 +33,7 @@
   <div class="text-sm text-gray-600 mb-3">Records: {{ entries_count }}</div>
 
   <div id="charts" class="flex flex-col gap-3">
-    <img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={{ cache_bust }}" />
+    <img class="w-full h-auto" alt="Blood Pressure and Pulse" />
   </div>
 
   <div>
@@ -42,25 +42,25 @@
       <table class="w-auto border-collapse border border-gray-300 mx-auto mt-3 rounded-none overflow-hidden shadow-lg">
       <thead>
         <tr>
-          <th rowspan="2" class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Date</th>
-          <th colspan="2" class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Morning</th>
-          <th colspan="2" class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Evening</th>
+          <th rowspan="2" class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Date</th>
+          <th colspan="2" class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Morning</th>
+          <th colspan="2" class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Evening</th>
         </tr>
         <tr>
-          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Pressure</th>
-          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Pulse</th>
-          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Pressure</th>
-          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5 sm:py-1.5">Pulse</th>
+          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Pressure</th>
+          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Pulse</th>
+          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Pressure</th>
+          <th class="border border-gray-300 px-1 py-1 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Pulse</th>
         </tr>
       </thead>
       <tbody>
         {% for day in grouped_data %}
         <tr class="even:bg-blue-50 hover:bg-gray-100 transition-colors duration-200">
-          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{{ day.date }}</td>
-          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{% if day.morning %}{{ day.morning.sys }} / {{ day.morning.dia }}{% endif %}</td>
-          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{% if day.morning %}{{ day.morning.pulse }}{% endif %}</td>
-          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{% if day.evening %}{{ day.evening.sys }} / {{ day.evening.dia }}{% endif %}</td>
-          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5 sm:py-1.5">{% if day.evening %}{{ day.evening.pulse }}{% endif %}</td>
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5">{{ day.date }}</td>
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5">{% if day.morning %}{{ day.morning.sys }} / {{ day.morning.dia }}{% endif %}</td>
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5">{% if day.morning %}{{ day.morning.pulse }}{% endif %}</td>
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5">{% if day.evening %}{{ day.evening.sys }} / {{ day.evening.dia }}{% endif %}</td>
+          <td class="border border-gray-300 px-1 py-1 text-center text-sm sm:px-2.5">{% if day.evening %}{{ day.evening.pulse }}{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
