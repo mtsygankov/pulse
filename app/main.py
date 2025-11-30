@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Query
 from fastapi.responses import (
     HTMLResponse,
     RedirectResponse,
@@ -142,7 +142,7 @@ def compute_median_avg(vals: list[int]) -> int:
         return sorted_vals[n // 2]
 
 
-def plot_pressure(entries):
+def plot_pressure(entries, night_shadows=None):
     # Готовим данные
     times = [parse_iso_utc(e["t"]).astimezone(TZ_CHART) for e in entries]
     times_num = mdates.date2num(times)
@@ -163,35 +163,36 @@ def plot_pressure(entries):
     fig, ax = plt.subplots(figsize=FIG_SIZE)  # адаптивно ужмётся по CSS
     ax2 = ax.twinx()
     if times:
-        # Add night shading
-        dates = set(dt.date() for dt in times)
-        for date in dates:
-            # Evening shading 18:00 to 24:00
-            start_eve = datetime.datetime.combine(
-                date, datetime.time(18, 0), tzinfo=TZ_CHART
-            )
-            end_eve = datetime.datetime.combine(
-                date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART
-            )
-            ax.axvspan(
-                float(mdates.date2num(start_eve)),
-                float(mdates.date2num(end_eve)),
-                color="lightgrey",
-                alpha=0.3,
-            )
-            # Morning shading 00:00 to 06:00 next day
-            start_mor = datetime.datetime.combine(
-                date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART
-            )
-            end_mor = datetime.datetime.combine(
-                date + datetime.timedelta(days=1), datetime.time(6, 0), tzinfo=TZ_CHART
-            )
-            ax.axvspan(
-                float(mdates.date2num(start_mor)),
-                float(mdates.date2num(end_mor)),
-                color="lightgrey",
-                alpha=0.3,
-            )
+        if night_shadows is not None:
+            # Add night shading
+            dates = set(dt.date() for dt in times)
+            for date in dates:
+                # Evening shading 18:00 to 24:00
+                start_eve = datetime.datetime.combine(
+                    date, datetime.time(18, 0), tzinfo=TZ_CHART
+                )
+                end_eve = datetime.datetime.combine(
+                    date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART
+                )
+                ax.axvspan(
+                    float(mdates.date2num(start_eve)),
+                    float(mdates.date2num(end_eve)),
+                    color="lightgrey",
+                    alpha=0.3,
+                )
+                # Morning shading 00:00 to 06:00 next day
+                start_mor = datetime.datetime.combine(
+                    date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART
+                )
+                end_mor = datetime.datetime.combine(
+                    date + datetime.timedelta(days=1), datetime.time(6, 0), tzinfo=TZ_CHART
+                )
+                ax.axvspan(
+                    float(mdates.date2num(start_mor)),
+                    float(mdates.date2num(end_mor)),
+                    color="lightgrey",
+                    alpha=0.3,
+                )
         # Temporary invisible bars to set axis limits
         temp_bars = ax2.bar(
             times_num,
@@ -356,22 +357,23 @@ def add(
 
 
 @app.get("/chart/combined.png")
-def chart_combined(filter: str | None = None):
+def chart_combined(filter: str | None = None, night_shadows: str | None = Query(default=None)):
     entries = read_all()
     if filter == "me_only":
         morning_ts, evening_ts = get_highlighted_timestamps(entries)
         filtered_entries = [e for e in entries if e["t"] in morning_ts or e["t"] in evening_ts]
     else:
         filtered_entries = entries
-    buf = plot_pressure(filtered_entries)
+    buf = plot_pressure(filtered_entries, night_shadows=night_shadows)
     return StreamingResponse(buf, media_type="image/png")
 
 
 @app.post("/update_chart")
-def update_chart(filter: str | None = Form(default=None)):
+def update_chart(filter: str | None = Form(default=None), night_shadows: str | None = Form(default=None)):
     cache_bust = int(time.time())
     filter_param = f"&filter={filter}" if filter else ""
-    html_content = f'<div id="charts" class="flex flex-col gap-3"><img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={cache_bust}{filter_param}" /></div>'
+    night_shadows_param = f"&night_shadows={night_shadows}" if night_shadows else ""
+    html_content = f'<div id="charts" class="flex flex-col gap-3"><img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={cache_bust}{filter_param}{night_shadows_param}" /></div>'
     return HTMLResponse(content=html_content)
 
 

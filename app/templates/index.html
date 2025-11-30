@@ -6,10 +6,14 @@
     <h1 class="text-xl">Blood Pressure and Pulse</h1>
   </div>
   <div id="settings-panel" class="hidden mt-2 p-2 border border-gray-300 rounded-md mb-2">
-    <form id="settings-form" hx-post="/update_chart" hx-target="#charts" hx-swap="outerHTML" hx-trigger="change from:input[name='filter']">
+    <form id="settings-form" hx-post="/update_chart" hx-target="#charts" hx-swap="outerHTML" hx-trigger="change">
       <label class="flex items-center gap-2">
         <input type="checkbox" name="filter" value="me_only" class="toggle-checkbox" />
         <span>Plot only morning/evening measurements</span>
+      </label>
+      <label class="flex items-center gap-2">
+        <input type="checkbox" name="night_shadows" value="true" class="toggle-checkbox" />
+        <span>Night shadows</span>
       </label>
     </form>
   </div>
