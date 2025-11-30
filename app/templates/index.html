@@ -73,6 +73,39 @@
     const panel = document.getElementById('settings-panel');
     panel.classList.toggle('hidden');
   });
+
+  // Load settings from localStorage
+  function loadSettings() {
+    const filterCheckbox = document.querySelector('input[name="filter"]');
+    const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
+
+    const filterState = localStorage.getItem('filter_me_only');
+    const nightShadowsState = localStorage.getItem('night_shadows');
+
+    if (filterState !== null) {
+      filterCheckbox.checked = JSON.parse(filterState);
+    }
+    if (nightShadowsState !== null) {
+      nightShadowsCheckbox.checked = JSON.parse(nightShadowsState);
+    }
+  }
+
+  // Save settings to localStorage
+  function saveSettings() {
+    const filterCheckbox = document.querySelector('input[name="filter"]');
+    const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
+
+    localStorage.setItem('filter_me_only', JSON.stringify(filterCheckbox.checked));
+    localStorage.setItem('night_shadows', JSON.stringify(nightShadowsCheckbox.checked));
+  }
+
+  // Load on page load
+  document.addEventListener('DOMContentLoaded', loadSettings);
+
+  // Save on change
+  document.querySelectorAll('.toggle-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', saveSettings);
+  });
 </script>
 {% endblock %}
 
