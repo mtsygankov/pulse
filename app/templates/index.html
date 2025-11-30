@@ -88,6 +88,19 @@
     if (nightShadowsState !== null) {
       nightShadowsCheckbox.checked = JSON.parse(nightShadowsState);
     }
+
+    // Update chart src with persisted settings
+    const img = document.querySelector('#charts img');
+    let params = [];
+    if (filterState === 'true') {
+      params.push('filter=me_only');
+    }
+    if (nightShadowsState === 'true') {
+      params.push('night_shadows=true');
+    }
+    params.push('cb={{ cache_bust }}');
+    const query = params.length ? '?' + params.join('&') : '?cb={{ cache_bust }}';
+    img.src = '/chart/combined.png' + query;
   }
 
   // Save settings to localStorage
