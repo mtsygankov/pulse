@@ -19,6 +19,11 @@
         <input type="checkbox" name="night_shadows" value="true" class="toggle-checkbox" />
         <span>Night shadows</span>
       </label>
+      <label class="flex items-center gap-2">
+        <input type="hidden" name="show_pulse" value="false" />
+        <input type="checkbox" name="show_pulse" value="true" class="toggle-checkbox" />
+        <span>Show Pulse on Chart</span>
+      </label>
     </form>
   </div>
 
@@ -78,15 +83,22 @@
   function loadSettings() {
     const filterCheckbox = document.querySelector('input[name="filter"]');
     const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
+    const showPulseCheckbox = document.querySelector('input[type="checkbox"][name="show_pulse"]');
 
     const filterState = localStorage.getItem('filter_me_only');
     const nightShadowsState = localStorage.getItem('night_shadows');
+    const showPulseState = localStorage.getItem('showPulse');
 
     if (filterState !== null) {
       filterCheckbox.checked = JSON.parse(filterState);
     }
     if (nightShadowsState !== null) {
       nightShadowsCheckbox.checked = JSON.parse(nightShadowsState);
+    }
+    if (showPulseState !== null) {
+      showPulseCheckbox.checked = JSON.parse(showPulseState);
+    } else {
+      showPulseCheckbox.checked = true;
     }
 
     // Update chart src with persisted settings
@@ -98,6 +110,11 @@
     if (nightShadowsState === 'true') {
       params.push('night_shadows=true');
     }
+    if (showPulseState === 'true' || showPulseState === null) {
+      params.push('show_pulse=true');
+    } else {
+      params.push('show_pulse=false');
+    }
     params.push('cb={{ cache_bust }}');
     const query = params.length ? '?' + params.join('&') : '?cb={{ cache_bust }}';
     img.src = '/chart/combined.png' + query;
@@ -107,13 +124,15 @@
   function saveSettings() {
     const filterCheckbox = document.querySelector('input[name="filter"]');
     const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
+    const showPulseCheckbox = document.querySelector('input[type="checkbox"][name="show_pulse"]');
 
     localStorage.setItem('filter_me_only', JSON.stringify(filterCheckbox.checked));
     localStorage.setItem('night_shadows', JSON.stringify(nightShadowsCheckbox.checked));
+    localStorage.setItem('showPulse', JSON.stringify(showPulseCheckbox.checked));
   }
 
   // Load on page load
-  document.addEventListener('DOMContentLoaded', loadSettings);
+  loadSettings();
 
   // Save on change
   document.querySelectorAll('.toggle-checkbox').forEach(checkbox => {

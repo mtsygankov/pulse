@@ -142,7 +142,7 @@ def compute_median_avg(vals: list[int]) -> int:
         return sorted_vals[n // 2]
 
 
-def plot_pressure(entries, night_shadows=None):
+def plot_pressure(entries, night_shadows=None, show_pulse=True):
     # Готовим данные
     times = [parse_iso_utc(e["t"]).astimezone(TZ_CHART) for e in entries]
     times_num = mdates.date2num(times)
@@ -202,17 +202,19 @@ def plot_pressure(entries, night_shadows=None):
             alpha=0,
             color="#d32f2f",
         )
-        ax.plot(times_num, pulse_vals, color="red", alpha=0.4, label="Pulse", linewidth=2)
+        if show_pulse:
+            ax.plot(times_num, pulse_vals, color="red", alpha=0.4, label="Pulse", linewidth=2)
+            ax.set_ylim(min(pulse_vals) - 5, max(pulse_vals) + 5)
         ax2.set_ylim(
             min(min(sys_vals), min(dia_vals)) - 10,
             max(max(sys_vals), max(dia_vals)) + 10,
         )
-        ax.set_ylim(min(pulse_vals) - 5, max(pulse_vals) + 5)
         ax.xaxis.set_major_formatter(
             mdates.DateFormatter("%b %d\n%H:%M", tz=TZ_CHART)
         )
         ax.tick_params(axis="x", rotation=0, labelsize=7)
-        ax.tick_params(axis="y", colors="red")
+        if show_pulse:
+            ax.tick_params(axis="y", colors="red")
         ax2.tick_params(axis="y", colors="green")
         fig.tight_layout()
         # Calculate bar width for 5 pixels
@@ -259,7 +261,8 @@ def plot_pressure(entries, night_shadows=None):
                 fontdict={"weight": "bold"},
                 color="green",
             )
-    ax.set_ylabel("bpm", color="red")
+    if show_pulse:
+        ax.set_ylabel("bpm", color="red")
     ax2.set_ylabel("mmHg", color="green")
     ax.grid(True, linestyle=":", alpha=0.5)
     # ax.legend(loc="upper left")
@@ -357,23 +360,24 @@ def add(
 
 
 @app.get("/chart/combined.png")
-def chart_combined(filter: str | None = None, night_shadows: str | None = Query(default=None)):
+def chart_combined(filter: str | None = None, night_shadows: str | None = Query(default=None), show_pulse: bool = Query(default=True)):
     entries = read_all()
     if filter == "me_only":
         morning_ts, evening_ts = get_highlighted_timestamps(entries)
         filtered_entries = [e for e in entries if e["t"] in morning_ts or e["t"] in evening_ts]
     else:
         filtered_entries = entries
-    buf = plot_pressure(filtered_entries, night_shadows=night_shadows)
+    buf = plot_pressure(filtered_entries, night_shadows=night_shadows, show_pulse=show_pulse)
     return StreamingResponse(buf, media_type="image/png")
 
 
 @app.post("/update_chart")
-def update_chart(filter: str | None = Form(default=None), night_shadows: str | None = Form(default=None)):
+def update_chart(filter: str | None = Form(default=None), night_shadows: str | None = Form(default=None), show_pulse: bool = Form(default=True)):
     cache_bust = int(time.time())
     filter_param = f"&filter={filter}" if filter else ""
     night_shadows_param = f"&night_shadows={night_shadows}" if night_shadows else ""
-    html_content = f'<div id="charts" class="flex flex-col gap-3"><img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={cache_bust}{filter_param}{night_shadows_param}" /></div>'
+    show_pulse_param = f"&show_pulse={str(show_pulse).lower()}"
+    html_content = f'<div id="charts" class="flex flex-col gap-3"><img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={cache_bust}{filter_param}{night_shadows_param}{show_pulse_param}" /></div>'
     return HTMLResponse(content=html_content)
 
 
