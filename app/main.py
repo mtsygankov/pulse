@@ -193,6 +193,13 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
                     color="lightgrey",
                     alpha=0.3,
                 )
+        # Calculate y-axis limits based on data being shown
+        if show_pulse:
+            overall_min = min(min(sys_vals), min(dia_vals), min(pulse_vals)) - 10
+            overall_max = max(max(sys_vals), max(dia_vals), max(pulse_vals)) + 10
+        else:
+            overall_min = min(min(sys_vals), min(dia_vals)) - 10
+            overall_max = max(max(sys_vals), max(dia_vals)) + 10
         # Temporary invisible bars to set axis limits
         temp_bars = ax2.bar(
             times_num,
@@ -204,17 +211,15 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
         )
         if show_pulse:
             ax.plot(times_num, pulse_vals, color="red", alpha=0.4, label="Pulse", linewidth=2)
-            ax.set_ylim(min(pulse_vals) - 5, max(pulse_vals) + 5)
-        ax2.set_ylim(
-            min(min(sys_vals), min(dia_vals)) - 10,
-            max(max(sys_vals), max(dia_vals)) + 10,
-        )
+            ax.set_ylim(overall_min, overall_max)
+            ax.tick_params(axis="y", colors="red")
+        else:
+            ax.tick_params(axis="y", labelleft=False)
+        ax2.set_ylim(overall_min, overall_max)
         ax.xaxis.set_major_formatter(
             mdates.DateFormatter("%b %d\n%H:%M", tz=TZ_CHART)
         )
         ax.tick_params(axis="x", rotation=0, labelsize=7)
-        if show_pulse:
-            ax.tick_params(axis="y", colors="red")
         ax2.tick_params(axis="y", colors="green")
         fig.tight_layout()
         # Calculate bar width for 5 pixels
@@ -261,6 +266,17 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
                 fontdict={"weight": "bold"},
                 color="green",
             )
+            if show_pulse:
+                ax.text(
+                    times_num[i],
+                    pulse_vals[i] - 2,
+                    str(pulse_vals[i]),
+                    ha="center",
+                    va="top",
+                    fontsize=5,
+                    fontdict={"weight": "bold"},
+                    color="red",
+                )
     if show_pulse:
         ax.set_ylabel("bpm", color="red")
     ax2.set_ylabel("mmHg", color="green")
