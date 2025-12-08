@@ -267,12 +267,28 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
                 color="green",
             )
             if show_pulse:
+                margin = 2
+                if i < len(pulse_vals) - 1:
+                    if pulse_vals[i+1] < pulse_vals[i]:
+                        y_pos = pulse_vals[i] + margin
+                        va = "center"
+                    else:
+                        y_pos = pulse_vals[i] - margin
+                        va = "center"
+                else:
+                    # last
+                    if i > 0 and pulse_vals[i-1] > pulse_vals[i]:
+                        y_pos = pulse_vals[i] - margin
+                        va = "center"
+                    else:
+                        y_pos = pulse_vals[i] + margin
+                        va = "center"
                 ax.text(
                     times_num[i],
-                    pulse_vals[i] - 2,
+                    y_pos,
                     str(pulse_vals[i]),
                     ha="center",
-                    va="top",
+                    va='center',
                     fontsize=5,
                     fontdict={"weight": "bold"},
                     color="red",
