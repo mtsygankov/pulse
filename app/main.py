@@ -39,6 +39,9 @@ app = FastAPI()
 app.mount(
     "/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static"
 )
+app.mount(
+    "/icons", StaticFiles(directory=os.path.join(BASE_DIR, "../icons")), name="icons"
+)
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 

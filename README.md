@@ -1,6 +1,14 @@
-# Pulse - Blood Pressure Tracker
+# Pulse - Blood Pressure Tracker PWA
 
-A web-based application for tracking and visualizing blood pressure measurements using FastAPI.
+A web-based Progressive Web App (PWA) for tracking and visualizing blood pressure measurements using FastAPI.
+
+## PWA Features
+
+The app now supports PWA installation with:
+- Web app manifest with proper name, icons, and theme colors
+- Mobile-friendly responsive design
+- Installable on mobile and desktop devices
+- Offline-capable through service worker (basic caching)
 
 ## Features
 
@@ -112,3 +120,25 @@ Validation ranges:
 - SYS: 70-250
 - DIA: 40-150, must be < SYS
 - PULSE: 30-220
+
+## PWA Configuration
+
+The PWA manifest is located at `/icons/site.webmanifest` and includes:
+- App name: "Blood Pressure Tracker"
+- Short name: "BP Tracker"
+- Theme colors: white background
+- Multiple icon sizes for different devices
+- Standalone display mode
+
+## PWA Installation
+
+1. Open the app in a modern browser (Chrome, Edge, Safari, etc.)
+2. The browser should prompt you to install the app
+3. Alternatively, use the browser's "Add to Home Screen" option
+
+## Notes
+
+- The app uses file-based storage (NDJSON format)
+- Data is stored in `data/bp.ndjson`
+- No authentication is implemented (for personal use only)
+- PWA features work best on HTTPS connections
