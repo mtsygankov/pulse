@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<div id="page" class="max-w-4xl mx-auto">
+  <div class="flex justify-between items-center mb-3">
+    <a href="/" class="px-2 py-1 text-base bg-gray-200 rounded-md hover:bg-gray-300">← Back</a>
+    <h1 class="text-xl">Edit Blood Pressure Data</h1>
+  </div>
+
+  <div class="mb-3">
+    <img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={{ cache_bust }}" />
+  </div>
+
+  <div class="text-sm text-center text-gray-600 mb-3">Editing last {{ entries|length }} of {{ total_count }} total records</div>
+
+  {% if status_msg %}
+  <div class="mb-3 p-2 border border-gray-300 rounded-md bg-yellow-50 text-yellow-800">{{ status_msg }}</div>
+  {% endif %}
+
+  <form id="edit-form" action="/edit" method="post"
+        hx-post="/edit" hx-target="#page" hx-swap="outerHTML" hx-disabled-elt="button">
+    <div class="overflow-x-auto">
+      <table class="border-collapse border border-gray-300 mx-auto mt-3 rounded-none overflow-hidden shadow-lg">
+        <thead>
+          <tr>
+            <th class="border border-gray-300 px-2 py-1 text-center text-r bg-gray-300 font-semibold text-gray-800">Timestamp (ISO UTC)</th>
+            <th class="border border-gray-300 px-2 py-1 text-r bg-gray-300 font-semibold text-gray-800">Systolic</th>
+            <th class="border border-gray-300 px-2 py-1 text-r bg-gray-300 font-semibold text-gray-800">Diastolic</th>
+            <th class="border border-gray-300 px-2 py-1 text-r bg-gray-300 font-semibold text-gray-800">Pulse</th>
+            <th class="border border-gray-300 px-2 py-1 text-r bg-gray-300 font-semibold text-gray-800">Raw Input</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+          <tr class="font-mono even:bg-blue-50 hover:bg-gray-100 transition-colors duration-200">
+            <td class="border border-gray-300 px-2">
+              <input name="t" type="text" class="px-1 py-1 text-center text-r bg-transparent rounded" value="{{ entry.t }}" placeholder="YYYY-MM-DDTHH:MM:SSZ" required />
+            </td>
+            <td class="border border-gray-300 px-2">
+              <input name="sys" type="number" min="70" max="250" class="w-full px-1 py-1 text-center text-r bg-transparent rounded" value="{{ entry.sys }}" required />
+            </td>
+            <td class="border border-gray-300 px-2">
+              <input name="dia" type="number" min="40" max="150" class="w-full px-1 py-1 text-center text-r bg-transparent rounded" value="{{ entry.dia }}" required />
+            </td>
+            <td class="border border-gray-300 px-2">
+              <input name="pulse" type="number" min="30" max="220" class="w-full px-1 py-1 text-center text-r bg-transparent rounded" value="{{ entry.pulse }}" required />
+            </td>
+            <td class="border border-gray-300 px-2">
+              <input name="raw" type="text" class="w-full px-1 py-1 text-r bg-transparent rounded" value="{{ entry.raw or '' }}" required />
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex gap-2 justify-center">
+      <button type="button" onclick="addRow()" class="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-green-600">Add Entry</button>
+      <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Save Changes</button>
+    </div>
+  </form>
+</div>
+
+<script>
+function addRow() {
+  const tbody = document.querySelector('tbody');
+  const newRow = document.createElement('tr');
+  newRow.className = 'even:bg-blue-50 hover:bg-gray-100 transition-colors duration-200';
+  newRow.innerHTML = `
+    <td class="border border-gray-300 px-2">
+      <input name="t" type="text" class="w-full px-1 py-1 text-sm border border-gray-300 rounded" placeholder="YYYY-MM-DDTHH:MM:SSZ" required />
+    </td>
+    <td class="border border-gray-300 px-2">
+      <input name="sys" type="number" min="70" max="250" class="w-full px-1 py-1 text-sm border border-gray-300 rounded" required />
+    </td>
+    <td class="border border-gray-300 px-2">
+      <input name="dia" type="number" min="40" max="150" class="w-full px-1 py-1 text-sm border border-gray-300 rounded" required />
+    </td>
+    <td class="border border-gray-300 px-2">
+      <input name="pulse" type="number" min="30" max="220" class="w-full px-1 py-1 text-sm border border-gray-300 rounded" required />
+    </td>
+    <td class="border border-gray-300 px-2">
+      <input name="raw" type="text" class="w-full px-1 py-1 text-sm border border-gray-300 rounded" required />
+    </td>
+  `;
+  tbody.appendChild(newRow);
+}
+</script>
+{% endblock %}

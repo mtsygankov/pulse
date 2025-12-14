@@ -8,8 +8,9 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-import os, io, json, time, fcntl, datetime
+import os, io, json, time, fcntl, datetime, shutil
 from zoneinfo import ZoneInfo
+from typing import List
 
 import matplotlib
 
@@ -31,7 +32,7 @@ TZ_CHART = ZoneInfo("Asia/Shanghai")  # UTC+8
 TZ_GROUP = ZoneInfo("Asia/Shanghai")  # UTC+8
 TZ_UTC = datetime.timezone.utc
 
-FIG_SIZE=(8,4)
+FIG_SIZE = (8, 4)
 BAR_WIDTH = 5
 ####################################################################
 
@@ -175,7 +176,9 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
                     date, datetime.time(18, 0), tzinfo=TZ_CHART
                 )
                 end_eve = datetime.datetime.combine(
-                    date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART
+                    date + datetime.timedelta(days=1),
+                    datetime.time(0, 0),
+                    tzinfo=TZ_CHART,
                 )
                 ax.axvspan(
                     float(mdates.date2num(start_eve)),
@@ -185,10 +188,14 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
                 )
                 # Morning shading 00:00 to 06:00 next day
                 start_mor = datetime.datetime.combine(
-                    date + datetime.timedelta(days=1), datetime.time(0, 0), tzinfo=TZ_CHART
+                    date + datetime.timedelta(days=1),
+                    datetime.time(0, 0),
+                    tzinfo=TZ_CHART,
                 )
                 end_mor = datetime.datetime.combine(
-                    date + datetime.timedelta(days=1), datetime.time(6, 0), tzinfo=TZ_CHART
+                    date + datetime.timedelta(days=1),
+                    datetime.time(6, 0),
+                    tzinfo=TZ_CHART,
                 )
                 ax.axvspan(
                     float(mdates.date2num(start_mor)),
@@ -213,15 +220,20 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
             color="#d32f2f",
         )
         if show_pulse:
-            ax.plot(times_num, pulse_vals, color="red", alpha=0.4, label="Pulse", linewidth=2)
+            ax.plot(
+                times_num,
+                pulse_vals,
+                color="red",
+                alpha=0.4,
+                label="Pulse",
+                linewidth=2,
+            )
             ax.set_ylim(overall_min, overall_max)
             ax.tick_params(axis="y", colors="red")
         else:
             ax.tick_params(axis="y", labelleft=False)
         ax2.set_ylim(overall_min, overall_max)
-        ax.xaxis.set_major_formatter(
-            mdates.DateFormatter("%b %d\n%H:%M", tz=TZ_CHART)
-        )
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d\n%H:%M", tz=TZ_CHART))
         ax.tick_params(axis="x", rotation=0, labelsize=7)
         ax2.tick_params(axis="y", colors="green")
         fig.tight_layout()
@@ -275,11 +287,17 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
                     pulse_vals[i],
                     str(pulse_vals[i]),
                     ha="center",
-                    va='center',
+                    va="center",
                     fontsize=5,
                     fontdict={"weight": "bold"},
                     color="red",
-                    bbox=dict(boxstyle="circle,pad=0.2", facecolor="white", edgecolor="red", linewidth=0, alpha=0.88),
+                    bbox=dict(
+                        boxstyle="circle,pad=0.2",
+                        facecolor="white",
+                        edgecolor="red",
+                        linewidth=0,
+                        alpha=0.88,
+                    ),
                 )
     if show_pulse:
         ax.set_ylabel("bpm", color="red")
@@ -349,7 +367,7 @@ def add(
             validate_values(sys_v, dia_v, pul_v)
 
         entry = {"t": now_utc_iso(), "sys": sys_v, "dia": dia_v, "pulse": pul_v}
-        if line: 
+        if line:
             entry["raw"] = line
         else:
             entry["raw"] = f"sys_bp={sys_v} dia_bp={dia_v} pulse={pul_v}"
@@ -380,19 +398,31 @@ def add(
 
 
 @app.get("/chart/combined.png")
-def chart_combined(filter: str | None = None, night_shadows: str | None = Query(default=None), show_pulse: bool = Query(default=True)):
+def chart_combined(
+    filter: str | None = None,
+    night_shadows: str | None = Query(default=None),
+    show_pulse: bool = Query(default=True),
+):
     entries = read_all()
     if filter == "me_only":
         morning_ts, evening_ts = get_highlighted_timestamps(entries)
-        filtered_entries = [e for e in entries if e["t"] in morning_ts or e["t"] in evening_ts]
+        filtered_entries = [
+            e for e in entries if e["t"] in morning_ts or e["t"] in evening_ts
+        ]
     else:
         filtered_entries = entries
-    buf = plot_pressure(filtered_entries, night_shadows=night_shadows, show_pulse=show_pulse)
+    buf = plot_pressure(
+        filtered_entries, night_shadows=night_shadows, show_pulse=show_pulse
+    )
     return StreamingResponse(buf, media_type="image/png")
 
 
 @app.post("/update_chart")
-def update_chart(filter: str | None = Form(default=None), night_shadows: str | None = Form(default=None), show_pulse: bool = Form(default=True)):
+def update_chart(
+    filter: str | None = Form(default=None),
+    night_shadows: str | None = Form(default=None),
+    show_pulse: bool = Form(default=True),
+):
     cache_bust = int(time.time())
     filter_param = f"&filter={filter}" if filter else ""
     night_shadows_param = f"&night_shadows={night_shadows}" if night_shadows else ""
@@ -405,6 +435,140 @@ def update_chart(filter: str | None = Form(default=None), night_shadows: str | N
 def dump():
     entries = read_all()
     return entries
+
+
+@app.get("/edit")
+def edit(request: Request, status_msg: str | None = None):
+    all_entries = read_all()
+    # Take last 10 (most recent)
+    entries = all_entries[-10:] if len(all_entries) >= 10 else all_entries
+    total_count = len(all_entries)
+    cache_bust = int(time.time())
+    return templates.TemplateResponse(
+        "edit.html",
+        {
+            "request": request,
+            "entries": entries,
+            "total_count": total_count,
+            "status_msg": status_msg,
+            "cache_bust": cache_bust,
+        },
+    )
+
+
+@app.post("/edit")
+def save_edit(
+    request: Request,
+    t: List[str] = Form(...),
+    sys: List[int] = Form(...),
+    dia: List[int] = Form(...),
+    pulse: List[int] = Form(...),
+    raw: List[str] = Form(...),
+):
+    if not (len(t) == len(sys) == len(dia) == len(pulse) == len(raw)):
+        status_msg = "Error: Mismatched number of fields"
+        all_entries = read_all()
+        entries = all_entries[-10:] if len(all_entries) >= 10 else all_entries
+        total_count = len(all_entries)
+        cache_bust = int(time.time())
+        return templates.TemplateResponse(
+            "edit.html",
+            {
+                "request": request,
+                "entries": entries,
+                "total_count": total_count,
+                "status_msg": status_msg,
+                "cache_bust": cache_bust,
+            },
+        )
+
+    edited_entries = []
+    errors = []
+    for i in range(len(t)):
+        try:
+            # Validate timestamp
+            dt = parse_iso_utc(t[i])
+            # Validate values
+            validate_values(sys[i], dia[i], pulse[i])
+            entry = {
+                "t": t[i],
+                "sys": sys[i],
+                "dia": dia[i],
+                "pulse": pulse[i],
+                "raw": raw[i],
+            }
+            edited_entries.append(entry)
+        except ValueError as e:
+            errors.append(f"Entry {i + 1}: {e}")
+
+    if errors:
+        status_msg = "Validation errors: " + "; ".join(errors)
+        all_entries = read_all()
+        entries = all_entries[-10:] if len(all_entries) >= 10 else all_entries
+        total_count = len(all_entries)
+        cache_bust = int(time.time())
+        return templates.TemplateResponse(
+            "edit.html",
+            {
+                "request": request,
+                "entries": entries,
+                "total_count": total_count,
+                "status_msg": status_msg,
+                "cache_bust": cache_bust,
+            },
+        )
+
+    # Read full entries
+    all_entries = read_all()
+    all_entries.sort(key=lambda x: x["t"])
+
+    # Combine: keep all except last 10, append edited
+    combined_entries = all_entries[:-10] + edited_entries
+
+    # Sort combined by timestamp
+    combined_entries.sort(key=lambda x: x["t"])
+
+    # Create backup
+    backup_file = None
+    if os.path.exists(DATA_FILE):
+        backup_file = (
+            DATA_FILE + ".backup." + datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        )
+        shutil.copy(DATA_FILE, backup_file)
+
+    # Write new data
+    ensure_data_file()
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            for entry in combined_entries:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        finally:
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+    backup_msg = (
+        f" Backup created as {os.path.basename(backup_file)}" if backup_file else ""
+    )
+    status_msg = f"Data saved successfully.{backup_msg}"
+
+    # If HTMX, return updated page
+    if request.headers.get("HX-Request") == "true":
+        all_entries = read_all()
+        entries = all_entries[-10:] if len(all_entries) >= 10 else all_entries
+        total_count = len(all_entries)
+        cache_bust = int(time.time())
+        return templates.TemplateResponse(
+            "edit.html",
+            {
+                "request": request,
+                "entries": entries,
+                "total_count": total_count,
+                "status_msg": status_msg,
+                "cache_bust": cache_bust,
+            },
+        )
+    # Else redirect
+    return RedirectResponse(url="/edit", status_code=303)
 
 
 @app.get("/dump")
