@@ -189,19 +189,21 @@ async function renderBPChart(containerId = 'bp-chart') {
         name: 'Pulse',
         type: 'line',
         data: pulseData,
-        showSymbol: false,
+        showSymbol: true,
+        symbolSize: 0,
         lineStyle: { color: 'rgba(255,0,0,0.4)', width: 2 },
         label: {
           show: true,
           formatter: (p) => String(p.data[1]),
           color: 'red',
           fontWeight: 'bold',
+          fontSize: 10,
           backgroundColor: 'rgba(255,255,255,0.88)',
-          borderColor: 'rgba(255,0,0,0.9)',
-          borderWidth: 1,
+          borderColor: 'red',
+          borderWidth: 0,
           borderRadius: 999,
           padding: [2, 6],
-          position: 'top'
+          position: 'inside'
         }
       }
     ]
