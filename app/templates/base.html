@@ -7,6 +7,12 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <title>{{ title if title else "Blood Pressure and Pulse" }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Required libs -->
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5"></script>
+  <!-- Custom charting code -->
+  <script src="/static/charting.js"></script>
+  
   <link rel="stylesheet" href="/static/style.css" />
   <!-- HTMX (optional). If the file is present in /static, progressive enhancement will be enabled. -->
   <script defer src="/static/htmx.min.js"></script>
