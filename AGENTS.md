@@ -67,10 +67,12 @@ The project uses `uv` for dependency management (evidenced by `uv.lock`).
 ## Guidelines for Developer Agents
 - **Code Style and Quality**: Use Ruff for linting and formatting (cache in `.ruff_cache/`). Follow Python best practices, especially for async FastAPI routes and data validation.
 - **Data Handling**:
-  - Measurements are stored as NDJSON with fields: `t` (ISO UTC timestamp), `sys` (systolic), `dia` (diastolic), `pulse`.
+  - Measurements are stored as NDJSON with fields: `local_tz` (timezone name: "Asia/Shanghai" or "Europe/Moscow"), `t` (ISO timestamp with explicit offset, e.g., "2025-11-16T22:34:40+08:00"), `sys` (systolic), `dia` (diastolic), `pulse`, and optional `raw` (original input).
+  - The `t` field stores the **local clock time** at which the measurement was taken, with an explicit timezone offset (e.g., +08:00 for Shanghai, +03:00 for Moscow).
+  - The `local_tz` field indicates the timezone of the measurement for metadata/tracking purposes (e.g., distinguishing measurements taken in different locations during travel).
   - Validate inputs strictly (ranges: SYS 70-250, DIA 40-150, PULSE 30-220; DIA < SYS).
   - Use file locking (`fcntl`) for safe concurrent writes.
-  - Timezone conversions are hardcoded to Asia/Shanghai (UTC+8); consider making configurable if expanding.
+  - **No timezone conversions at plotting time**: The stored local timestamps are used directly for date grouping, hour detection (morning/evening), night shadows, and chart labels. This simplifies visualization for users tracking measurements across different timezones during travel.
 - **Web Development**:
   - Templates use Jinja2; ensure responsive design with provided CSS.
   - HTMX is used for dynamic updates; maintain compatibility.

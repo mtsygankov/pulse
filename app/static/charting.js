@@ -25,44 +25,21 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
 
   if (!rows.length) throw new Error('No valid records returned from /json');
 
-  // Helper: get hour in target timezone (Asia/Shanghai) robustly
-  function hourInTZ(date, tz = 'Asia/Shanghai') {
-    try {
-      const fmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: '2-digit', hour12: false });
-      return Number(fmt.format(date));
-    } catch (e) {
-      // Fallback: fixed +8 shift from UTC (Asia/Shanghai has no DST)
-      return (date.getUTCHours() + 8) % 24;
-    }
+  // Helper: extract local hour from ISO timestamp string (e.g., "2025-11-16T22:34:40+08:00")
+  function extractLocalHour(isoString) {
+    const match = /T(\d{2}):/.exec(isoString);
+    return match ? Number(match[1]) : 0;
   }
 
   // Compute highlighted timestamps (first morning 07:00-11:59 and first evening >=21:00 per local date)
-  function computeHighlightedTimestamps(rows, tz = 'Asia/Shanghai') {
+  function computeHighlightedTimestamps(rows) {
     const grouped = new Map();
     for (const r of rows) {
-      // get local date components in TZ
-      try {
-        const parts = new Intl.DateTimeFormat('en-CA', {
-          timeZone: tz,
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          hour12: false
-        }).formatToParts(r.t);
-        const obj = Object.fromEntries(parts.map(p => [p.type, p.value]));
-        const dateKey = `${obj.year}-${obj.month}-${obj.day}`;
-        const hour = Number(obj.hour);
-        if (!grouped.has(dateKey)) grouped.set(dateKey, []);
-        grouped.get(dateKey).push({ row: r, hour });
-      } catch (e) {
-        // fallback: compute using UTC +8
-        const d = new Date(r.t.getTime() + 8 * 3600 * 1000);
-        const dateKey = d.toISOString().slice(0, 10);
-        const hour = d.getUTCHours();
-        if (!grouped.has(dateKey)) grouped.set(dateKey, []);
-        grouped.get(dateKey).push({ row: r, hour });
-      }
+      // Extract date and hour from ISO string (local-clock components)
+      const isoDate = r.iso.slice(0, 10); // YYYY-MM-DD
+      const hour = extractLocalHour(r.iso);
+      if (!grouped.has(isoDate)) grouped.set(isoDate, []);
+      grouped.get(isoDate).push({ row: r, hour });
     }
 
     const morning = new Set();
@@ -92,41 +69,29 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
   // Compute highlighted timestamps to match python server logic
   const { morning: morningSet, evening: eveningSet } = computeHighlightedTimestamps(rows);
 
-  // Compute night shading ranges (18:00-24:00 and 00:00-06:00 next day) in Asia/Shanghai
-  function computeNightShadows(rows, tz = 'Asia/Shanghai') {
+  // Compute night shading ranges (18:00-24:00 and 00:00-06:00 next day) using local timestamps
+  function computeNightShadows(rows) {
     const dates = new Set();
     for (const r of rows) {
-      try {
-        const parts = new Intl.DateTimeFormat('en-CA', {
-          timeZone: tz,
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        }).formatToParts(r.t);
-        const obj = Object.fromEntries(parts.map(p => [p.type, p.value]));
-        const dateKey = `${obj.year}-${obj.month}-${obj.day}`;
-        dates.add(dateKey);
-      } catch (e) {
-        const d = new Date(r.t.getTime() + 8 * 3600 * 1000);
-        const dateKey = d.toISOString().slice(0, 10);
-        dates.add(dateKey);
-      }
+      dates.add(r.iso.slice(0, 10)); // YYYY-MM-DD
     }
 
     const ranges = [];
     for (const dateKey of Array.from(dates).sort()) {
-      try {
-        // Construct Shanghai-local day start (00:00) and compute ranges relative to it.
-        const dayStartMs = new Date(dateKey + 'T00:00:00+08:00').getTime();
-        const eveStart = dayStartMs + 18 * 3600 * 1000; // 18:00 local
-        const eveEnd = dayStartMs + 24 * 3600 * 1000; // next day 00:00 local
-        ranges.push([eveStart, eveEnd]);
-        const morStart = dayStartMs + 24 * 3600 * 1000; // next day 00:00 local
-        const morEnd = morStart + 6 * 3600 * 1000; // next day 06:00 local
-        ranges.push([morStart, morEnd]);
-      } catch (e) {
-        // ignore malformed dateKey
-      }
+      // Extract timezone offset from a sample entry for this date
+      const exampleRow = rows.find(r => r.iso.startsWith(dateKey));
+      if (!exampleRow) continue;
+      const offsetMatch = /([+-]\d{2}):(\d{2})$/.exec(exampleRow.iso);
+      const offset = offsetMatch ? `${offsetMatch[1]}:${offsetMatch[2]}` : '+08:00';
+      
+      // Construct local-time ranges
+      const dayStartMs = new Date(`${dateKey}T00:00:00${offset}`).getTime();
+      const eveStart = dayStartMs + 18 * 3600 * 1000; // 18:00 local
+      const eveEnd = dayStartMs + 24 * 3600 * 1000;   // next day 00:00 local
+      ranges.push([eveStart, eveEnd]);
+      const morStart = dayStartMs + 24 * 3600 * 1000; // next day 00:00 local
+      const morEnd = morStart + 6 * 3600 * 1000;      // next day 06:00 local
+      ranges.push([morStart, morEnd]);
     }
     return ranges;
   }
@@ -224,21 +189,9 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
       formatter: (params) => {
         // params is array (bar + line)
         const time = params?.[0]?.axisValue;
-        let header;
-        try {
-          header = new Intl.DateTimeFormat(undefined, {
-            timeZone: 'Asia/Shanghai',
-            year: 'numeric',
-            month: 'short',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-          }).format(new Date(time));
-        } catch (e) {
-          const d = new Date(time);
-          header = `${d.toLocaleString()}`;
-        }
+        const d = new Date(time);
+        // Simple UTC-based formatting (ISO already includes local offset)
+        const header = d.toISOString().replace('T', ' ').slice(0, 19);
         let bp = '';
         let pulse = '';
         for (const p of params) {
@@ -260,21 +213,12 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
     xAxis: {
       type: 'time',
       axisLabel: {
-        // Show only date (month day) labels in Asia/Shanghai timezone
+        // Show date labels using simple formatting
         formatter: (val) => {
-          try {
-            const d = new Date(val);
-            try {
-              const fmt = new Intl.DateTimeFormat(undefined, { timeZone: 'Asia/Shanghai', month: 'short', day: '2-digit' });
-              return fmt.format(d);
-            } catch (e) {
-              const month = d.toLocaleString(undefined, { month: 'short' });
-              const day = String(d.getDate()).padStart(2, '0');
-              return `${month} ${day}`;
-            }
-          } catch (e) {
-            return '';
-          }
+          const d = new Date(val);
+          const month = d.toLocaleString(undefined, { month: 'short' });
+          const day = String(d.getUTCDate()).padStart(2, '0');
+          return `${month} ${day}`;
         },
         fontSize: 10
       },

@@ -52,13 +52,22 @@ def ensure_data_file():
             pass
 
 
+def now_local_iso(tz_name: str):
+    """Generate ISO timestamp in the specified local timezone with explicit offset."""
+    tz = ZoneInfo(tz_name)
+    return datetime.datetime.now(tz).isoformat(timespec='seconds')
+
+
 def now_utc_iso():
     return datetime.datetime.now(TZ_UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def parse_iso_utc(s: str) -> datetime.datetime:
-    # '...Z' -> aware UTC
-    return datetime.datetime.fromisoformat(s.replace("Z", "+00:00"))
+def parse_iso(s: str) -> datetime.datetime:
+    """Parse ISO timestamp with explicit offset (handles +08:00, +03:00, etc.)."""
+    # Handle legacy 'Z' suffix if any remain
+    if s.endswith('Z'):
+        s = s.replace('Z', '+00:00')
+    return datetime.datetime.fromisoformat(s)
 
 
 def read_all():
@@ -73,8 +82,8 @@ def read_all():
                 items.append(json.loads(line))
             except Exception:
                 continue
-    # сортировка по времени
-    items.sort(key=lambda x: x.get("t", ""))
+    # сортировка по времени (parse to handle different offsets)
+    items.sort(key=lambda x: parse_iso(x["t"]))
     return items
 
 
@@ -83,10 +92,10 @@ def group_measurements_by_date(entries):
 
     grouped = defaultdict(list)
     for entry in entries:
-        dt_utc = parse_iso_utc(entry["t"])
-        dt_group = dt_utc.astimezone(TZ_GROUP)
-        date_str = dt_group.strftime("%Y-%m-%d")
-        grouped[date_str].append((dt_group, entry))
+        dt = parse_iso(entry["t"])
+        # Use local-clock date (no timezone conversion)
+        date_str = dt.date().isoformat()
+        grouped[date_str].append((dt, entry))
     # Sort dates
     sorted_dates = sorted(grouped.keys())
     result = []
@@ -147,8 +156,8 @@ def compute_median_avg(vals: list[int]) -> int:
 
 
 def plot_pressure(entries, night_shadows=None, show_pulse=True):
-    # Готовим данные
-    times = [parse_iso_utc(e["t"]).astimezone(TZ_CHART) for e in entries]
+    # Готовим данные (use local timestamps directly)
+    times = [parse_iso(e["t"]) for e in entries]
     times_num = mdates.date2num(times)
     sys_vals = [e["sys"] for e in entries]
     dia_vals = [e["dia"] for e in entries]
@@ -168,17 +177,18 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
     ax2 = ax.twinx()
     if times:
         if night_shadows is not None:
-            # Add night shading
+            # Add night shading (use timezone from entries)
+            tz_info = times[0].tzinfo if times else None
             dates = set(dt.date() for dt in times)
             for date in dates:
                 # Evening shading 18:00 to 24:00
                 start_eve = datetime.datetime.combine(
-                    date, datetime.time(18, 0), tzinfo=TZ_CHART
+                    date, datetime.time(18, 0), tzinfo=tz_info
                 )
                 end_eve = datetime.datetime.combine(
                     date + datetime.timedelta(days=1),
                     datetime.time(0, 0),
-                    tzinfo=TZ_CHART,
+                    tzinfo=tz_info,
                 )
                 ax.axvspan(
                     float(mdates.date2num(start_eve)),
@@ -190,12 +200,12 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
                 start_mor = datetime.datetime.combine(
                     date + datetime.timedelta(days=1),
                     datetime.time(0, 0),
-                    tzinfo=TZ_CHART,
+                    tzinfo=tz_info,
                 )
                 end_mor = datetime.datetime.combine(
                     date + datetime.timedelta(days=1),
                     datetime.time(6, 0),
-                    tzinfo=TZ_CHART,
+                    tzinfo=tz_info,
                 )
                 ax.axvspan(
                     float(mdates.date2num(start_mor)),
@@ -233,7 +243,7 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
         else:
             ax.tick_params(axis="y", labelleft=False)
         ax2.set_ylim(overall_min, overall_max)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d\n%H:%M", tz=TZ_CHART))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d\n%H:%M"))
         ax.tick_params(axis="x", rotation=0, labelsize=7)
         ax2.tick_params(axis="y", colors="green")
         fig.tight_layout()
@@ -338,6 +348,7 @@ def add(
     sys_bp: int | None = Form(default=None),
     dia_bp: int | None = Form(default=None),
     pulse: int | None = Form(default=None),
+    local_tz: str | None = Form(default=None),
 ):
     input_value = None
     try:
@@ -366,7 +377,15 @@ def add(
             sys_v, dia_v, pul_v = sys_bp, dia_bp, pulse
             validate_values(sys_v, dia_v, pul_v)
 
-        entry = {"t": now_utc_iso(), "sys": sys_v, "dia": dia_v, "pulse": pul_v}
+        # Use local timezone for timestamp
+        tz_name = local_tz or "Asia/Shanghai"
+        entry = {
+            "local_tz": tz_name,
+            "t": now_local_iso(tz_name),
+            "sys": sys_v,
+            "dia": dia_v,
+            "pulse": pul_v
+        }
         if line:
             entry["raw"] = line
         else:
@@ -464,8 +483,9 @@ def save_edit(
     dia: List[int] = Form(...),
     pulse: List[int] = Form(...),
     raw: List[str] = Form(...),
+    local_tz: List[str] = Form(...),
 ):
-    if not (len(t) == len(sys) == len(dia) == len(pulse) == len(raw)):
+    if not (len(t) == len(sys) == len(dia) == len(pulse) == len(raw) == len(local_tz)):
         status_msg = "Error: Mismatched number of fields"
         all_entries = read_all()
         entries = all_entries[-10:] if len(all_entries) >= 10 else all_entries
@@ -487,10 +507,11 @@ def save_edit(
     for i in range(len(t)):
         try:
             # Validate timestamp
-            dt = parse_iso_utc(t[i])
+            dt = parse_iso(t[i])
             # Validate values
             validate_values(sys[i], dia[i], pulse[i])
             entry = {
+                "local_tz": local_tz[i],
                 "t": t[i],
                 "sys": sys[i],
                 "dia": dia[i],

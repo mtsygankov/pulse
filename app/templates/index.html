@@ -26,12 +26,24 @@
           <input type="checkbox" name="show_pulse" value="true" class="toggle-checkbox" />
           <span>Show Pulse on Chart</span>
         </label>
+        <div class="mt-2">
+          <label class="block text-sm font-semibold mb-1">Local Timezone:</label>
+          <label class="flex items-center gap-2">
+            <input type="radio" name="local_tz" value="Asia/Shanghai" class="tz-radio" />
+            <span>Shanghai (UTC+8)</span>
+          </label>
+          <label class="flex items-center gap-2">
+            <input type="radio" name="local_tz" value="Europe/Moscow" class="tz-radio" />
+            <span>Moscow (UTC+3)</span>
+          </label>
+        </div>
       </form>
     </div>
     
     <form id="entry-form" class="flex gap-2 flex-wrap mb-2"
     action="/add" method="post"
     hx-post="/add" hx-target="#page" hx-swap="outerHTML" hx-disabled-elt="button">
+    <input type="hidden" name="local_tz" id="local_tz_input" />
     <input name="line" type="text" class="flex-1 min-w-[220px] px-2 py-1 text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g.: 120 80 56 125 85 60" inputmode="numeric" value="{{ input_value or '' }}" />
     <button type="submit" class="text-base bg-blue-500 font-bold text-white rounded-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 px-4 py-2">Save</button>
   </form>
@@ -49,6 +61,7 @@
       let showPulse = true;
       let meOnly = false;
       let nightShadows = false;
+      let localTz = 'Asia/Shanghai';
       try {
         const sp = localStorage.getItem('showPulse');
         showPulse = sp === null ? true : JSON.parse(sp);
@@ -61,9 +74,17 @@
         const ns = localStorage.getItem('night_shadows');
         nightShadows = ns === null ? false : JSON.parse(ns);
       } catch (e) {}
+      try {
+        const tz = localStorage.getItem('local_tz');
+        localTz = tz || 'Asia/Shanghai';
+      } catch (e) {}
+
+      // Set hidden input to current timezone
+      const localTzInput = document.getElementById('local_tz_input');
+      if (localTzInput) localTzInput.value = localTz;
 
       renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly), nightShadows: Boolean(nightShadows) })
-        .catch(err => console.error('renderBPChart error:', err));
+        .catch(err => console.error('Initial renderBPChart error:', err));
     })();
   </script>
 
@@ -116,10 +137,12 @@
     const filterCheckbox = document.querySelector('input[name="filter"]');
     const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
     const showPulseCheckbox = document.querySelector('input[type="checkbox"][name="show_pulse"]');
+    const tzRadios = document.querySelectorAll('input[name="local_tz"]');
 
     const filterState = localStorage.getItem('filter_me_only');
     const nightShadowsState = localStorage.getItem('night_shadows');
     const showPulseState = localStorage.getItem('showPulse');
+    const localTzState = localStorage.getItem('local_tz') || 'Asia/Shanghai';
 
     if (filterState !== null) {
       filterCheckbox.checked = JSON.parse(filterState);
@@ -132,6 +155,13 @@
     } else {
       showPulseCheckbox.checked = true;
     }
+
+    // Set timezone radio
+    tzRadios.forEach(radio => {
+      if (radio.value === localTzState) {
+        radio.checked = true;
+      }
+    });
 
     // Toggle pulse columns visibility and render interactive chart
     togglePulseColumns(showPulseCheckbox.checked);
@@ -151,10 +181,17 @@
     const filterCheckbox = document.querySelector('input[name="filter"]');
     const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
     const showPulseCheckbox = document.querySelector('input[type="checkbox"][name="show_pulse"]');
+    const selectedTz = document.querySelector('input[name="local_tz"]:checked');
 
     localStorage.setItem('filter_me_only', JSON.stringify(filterCheckbox.checked));
     localStorage.setItem('night_shadows', JSON.stringify(nightShadowsCheckbox.checked));
     localStorage.setItem('showPulse', JSON.stringify(showPulseCheckbox.checked));
+    if (selectedTz) {
+      localStorage.setItem('local_tz', selectedTz.value);
+      // Update hidden input for form submission
+      const localTzInput = document.getElementById('local_tz_input');
+      if (localTzInput) localTzInput.value = selectedTz.value;
+    }
   }
 
   // Toggle pulse columns visibility
@@ -189,6 +226,13 @@
       } catch (e) {
         console.error('Error applying settings change:', e);
       }
+    });
+  });
+
+  // Handle timezone radio changes
+  document.querySelectorAll('.tz-radio').forEach(radio => {
+    radio.addEventListener('change', () => {
+      saveSettings();
     });
   });
 
