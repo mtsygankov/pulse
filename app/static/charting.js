@@ -78,7 +78,7 @@ async function renderBPChart(containerId = 'bp-chart') {
     // Pan/zoom + selection window (built-in)
     dataZoom: [
       { type: 'inside', xAxisIndex: 0, filterMode: 'none' },  // wheel + drag pan
-      { type: 'slider', xAxisIndex: 0, height: 22, bottom: 18, filterMode: 'none' } // visible window slider
+      { type: 'slider', xAxisIndex: 0, height: 32, bottom: 28, filterMode: 'none' } // visible window slider
     ],
 
     xAxis: {
@@ -167,10 +167,17 @@ async function renderBPChart(containerId = 'bp-chart') {
           const dia = api.value(1);
 
           const pt = api.coord([x, dia]);
+          // clip to plotting area
+          const coord = params.coordSys;
+          const xPx = pt[0], yPx = pt[1];
+          if (xPx < coord.x || xPx > coord.x + coord.width || yPx < coord.y || yPx > coord.y + coord.height) {
+            return null;
+          }
+
           return {
             type: 'text',
-            x: pt[0],
-            y: pt[1] + 10,
+            x: xPx,
+            y: yPx + 10,
             style: {
               text: String(dia),
               fill: 'green',
@@ -191,7 +198,7 @@ async function renderBPChart(containerId = 'bp-chart') {
         data: pulseData,
         showSymbol: true,
         symbolSize: 0,
-        lineStyle: { color: 'rgba(255,0,0,0.4)', width: 2 },
+        lineStyle: { color: 'rgba(255,0,0,0.4)', width: 4 },
         label: {
           show: true,
           formatter: (p) => String(p.data[1]),
