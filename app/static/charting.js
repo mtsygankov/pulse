@@ -193,7 +193,7 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
 
   // Build dataZoom entries, applying preserved window if available.
   // Constrain slider to noon-aligned boundaries.
-  const dataZoomInside = { type: 'inside', xAxisIndex: 0, filterMode: 'none', minValueSpan: 24 * 3600 * 1000 };
+  const dataZoomInside = { type: 'inside', xAxisIndex: 0, filterMode: 'none', minValueSpan: 24 * 3600 * 1000, zoomOnMouseWheel: false };
   const dataZoomSlider = { type: 'slider', xAxisIndex: 0, height: 32, bottom: 28, filterMode: 'none', minValueSpan: 24 * 3600 * 1000 };
   if (preservedDZ) {
     if (preservedDZ.startValue !== undefined) {
