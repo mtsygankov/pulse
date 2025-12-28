@@ -116,18 +116,13 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
     const ranges = [];
     for (const dateKey of Array.from(dates).sort()) {
       try {
-        const eveStart = new Date(dateKey + 'T18:00:00+08:00').getTime();
-        const eveEnd = new Date(dateKey + 'T23:59:59+08:00').getTime() + 1; // inclusive end
+        // Construct Shanghai-local day start (00:00) and compute ranges relative to it.
+        const dayStartMs = new Date(dateKey + 'T00:00:00+08:00').getTime();
+        const eveStart = dayStartMs + 18 * 3600 * 1000; // 18:00 local
+        const eveEnd = dayStartMs + 24 * 3600 * 1000; // next day 00:00 local
         ranges.push([eveStart, eveEnd]);
-        // morning next day: compute next date via Date object
-        const nextDay = new Date(dateKey + 'T00:00:00+08:00');
-        const nextDayYMD = new Date(nextDay.getTime() + 24 * 3600 * 1000);
-        const yyyy = nextDayYMD.getUTCFullYear();
-        const mm = String(nextDayYMD.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(nextDayYMD.getUTCDate()).padStart(2, '0');
-        const nextKey = `${yyyy}-${mm}-${dd}`;
-        const morStart = new Date(nextKey + 'T00:00:00+08:00').getTime();
-        const morEnd = new Date(nextKey + 'T06:00:00+08:00').getTime();
+        const morStart = dayStartMs + 24 * 3600 * 1000; // next day 00:00 local
+        const morEnd = morStart + 6 * 3600 * 1000; // next day 06:00 local
         ranges.push([morStart, morEnd]);
       } catch (e) {
         // ignore malformed dateKey
@@ -229,8 +224,21 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
       formatter: (params) => {
         // params is array (bar + line)
         const time = params?.[0]?.axisValue;
-        const d = new Date(time);
-        const header = `${d.toLocaleString()}`;
+        let header;
+        try {
+          header = new Intl.DateTimeFormat(undefined, {
+            timeZone: 'Asia/Shanghai',
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          }).format(new Date(time));
+        } catch (e) {
+          const d = new Date(time);
+          header = `${d.toLocaleString()}`;
+        }
         let bp = '';
         let pulse = '';
         for (const p of params) {
@@ -252,13 +260,21 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
     xAxis: {
       type: 'time',
       axisLabel: {
+        // Show only date (month day) labels in Asia/Shanghai timezone
         formatter: (val) => {
-          const d = new Date(val);
-          const month = d.toLocaleString(undefined, { month: 'short' });
-          const day = String(d.getDate()).padStart(2, '0');
-          const hh = String(d.getHours()).padStart(2, '0');
-          const mm = String(d.getMinutes()).padStart(2, '0');
-          return `${month} ${day}\n${hh}:${mm}`;
+          try {
+            const d = new Date(val);
+            try {
+              const fmt = new Intl.DateTimeFormat(undefined, { timeZone: 'Asia/Shanghai', month: 'short', day: '2-digit' });
+              return fmt.format(d);
+            } catch (e) {
+              const month = d.toLocaleString(undefined, { month: 'short' });
+              const day = String(d.getDate()).padStart(2, '0');
+              return `${month} ${day}`;
+            }
+          } catch (e) {
+            return '';
+          }
         },
         fontSize: 10
       },
