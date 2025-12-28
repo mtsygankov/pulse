@@ -61,6 +61,12 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
     return match ? Number(match[1]) : 0;
   }
 
+  // Helper: get noon (12:00) of the date containing ms, offset by dayOffset days
+  function getNoonMs(ms, dayOffset = 0) {
+    const d = new Date(ms);
+    return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + dayOffset, 12, 0, 0, 0);
+  }
+
   // Compute highlighted timestamps (first morning 07:00-11:59 and first evening >=21:00 per local date)
   function computeHighlightedTimestamps(rows) {
     const grouped = new Map();
@@ -128,6 +134,13 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
     filteredRows = filtered.length ? filtered : rows;
   }
 
+  // Compute x-axis noon-aligned boundaries:
+  // min = noon of (earliest date - 1 day), max = noon of (latest date + 1 day)
+  const dataMinX = filteredRows[0].x;
+  const dataMaxX = filteredRows[filteredRows.length - 1].x;
+  const axisMin = getNoonMs(dataMinX, -1);
+  const axisMax = getNoonMs(dataMaxX, +1);
+
   // Shared y range like python (sys/dia/pulse together) — compute from filtered rows
   const allVals = filteredRows.flatMap(r => [r.sys, r.dia, r.pulse]);
   const overallMin = Math.floor(Math.min(...allVals) - 10);
@@ -179,14 +192,18 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
   const chart = existing || echarts.init(el, null, { renderer: 'canvas' });
 
   // Build dataZoom entries, applying preserved window if available.
-  const dataZoomInside = { type: 'inside', xAxisIndex: 0, filterMode: 'none' };
-  const dataZoomSlider = { type: 'slider', xAxisIndex: 0, height: 32, bottom: 28, filterMode: 'none' };
+  // Constrain slider to noon-aligned boundaries.
+  const dataZoomInside = { type: 'inside', xAxisIndex: 0, filterMode: 'none', minValueSpan: 24 * 3600 * 1000 };
+  const dataZoomSlider = { type: 'slider', xAxisIndex: 0, height: 32, bottom: 28, filterMode: 'none', minValueSpan: 24 * 3600 * 1000 };
   if (preservedDZ) {
     if (preservedDZ.startValue !== undefined) {
-      dataZoomInside.startValue = preservedDZ.startValue;
-      dataZoomInside.endValue = preservedDZ.endValue;
-      dataZoomSlider.startValue = preservedDZ.startValue;
-      dataZoomSlider.endValue = preservedDZ.endValue;
+      // Clamp preserved values to current axis bounds
+      const clampedStart = Math.max(axisMin, Math.min(axisMax, preservedDZ.startValue));
+      const clampedEnd = Math.max(axisMin, Math.min(axisMax, preservedDZ.endValue));
+      dataZoomInside.startValue = clampedStart;
+      dataZoomInside.endValue = clampedEnd;
+      dataZoomSlider.startValue = clampedStart;
+      dataZoomSlider.endValue = clampedEnd;
     } else if (preservedDZ.start !== undefined) {
       dataZoomInside.start = preservedDZ.start;
       dataZoomInside.end = preservedDZ.end;
@@ -194,19 +211,16 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
       dataZoomSlider.end = preservedDZ.end;
     }
   } else {
-    // Default initial zoom: show last 30 days of available data (user can zoom out)
-    try {
-      const minX = filteredRows[0].x;
-      const maxX = filteredRows[filteredRows.length - 1].x;
-      const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-      const startValue = Math.max(minX, maxX - THIRTY_DAYS_MS);
-      dataZoomInside.startValue = startValue;
-      dataZoomInside.endValue = maxX;
-      dataZoomSlider.startValue = startValue;
-      dataZoomSlider.endValue = maxX;
-    } catch (e) {
-      // If something goes wrong (unexpected data), fall back to full range (do nothing)
-    }
+    // Default initial zoom: show last 30 days of available data, aligned to noon boundaries
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    // Start at noon of (30 days before latest date - 1 day) or axisMin, whichever is later
+    const thirtyDaysAgoNoon = getNoonMs(dataMaxX - THIRTY_DAYS_MS, -1);
+    const startValue = Math.max(axisMin, thirtyDaysAgoNoon);
+    const endValue = axisMax;
+    dataZoomInside.startValue = startValue;
+    dataZoomInside.endValue = endValue;
+    dataZoomSlider.startValue = startValue;
+    dataZoomSlider.endValue = endValue;
   }
 
   const option = {
@@ -241,6 +255,9 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
 
     xAxis: {
       type: 'time',
+      min: axisMin,
+      max: axisMax,
+      minInterval: 24 * 3600 * 1000, // Hint ECharts to place ticks at daily intervals (noon-aligned due to bounds)
       axisLabel: {
         // Show date labels using simple formatting
         formatter: (val) => {
