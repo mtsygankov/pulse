@@ -3,13 +3,43 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
   const res = await fetch('/json', { cache: 'no-store' });
   const entries = await res.json();
 
+  // Parse ISO timestamp as *local clock time*, ignoring any timezone offset.
+  // This makes charts independent of:
+  // - the browser's timezone
+  // - the stored offset (+08:00 vs +03:00)
+  function parseLocalClockIsoToMs(isoString) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(isoString));
+    if (!m) return NaN;
+    const year = Number(m[1]);
+    const month0 = Number(m[2]) - 1;
+    const day = Number(m[3]);
+    const hour = Number(m[4]);
+    const minute = Number(m[5]);
+    const second = Number(m[6] ?? '0');
+    return Date.UTC(year, month0, day, hour, minute, second, 0);
+  }
+
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  // Format an x-axis ms value back to local-clock date/time (UTC getters avoid browser TZ).
+  function formatMsAsLocalClock(ms) {
+    const d = new Date(ms);
+    const Y = d.getUTCFullYear();
+    const M = pad2(d.getUTCMonth() + 1);
+    const D = pad2(d.getUTCDate());
+    const h = pad2(d.getUTCHours());
+    const m = pad2(d.getUTCMinutes());
+    return `${Y}-${M}-${D} ${h}:${m}`;
+  }
+
   const rows = (Array.isArray(entries) ? entries : [])
     .map(e => {
-      const t = new Date(e.t);
+      const iso = String(e.t ?? '');
       return {
-        t,
-        iso: e.t,
-        x: t.getTime(),
+        iso,
+        x: parseLocalClockIsoToMs(iso),
         sys: Number(e.sys),
         dia: Number(e.dia),
         pulse: Number(e.pulse)
@@ -78,14 +108,9 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
 
     const ranges = [];
     for (const dateKey of Array.from(dates).sort()) {
-      // Extract timezone offset from a sample entry for this date
-      const exampleRow = rows.find(r => r.iso.startsWith(dateKey));
-      if (!exampleRow) continue;
-      const offsetMatch = /([+-]\d{2}):(\d{2})$/.exec(exampleRow.iso);
-      const offset = offsetMatch ? `${offsetMatch[1]}:${offsetMatch[2]}` : '+08:00';
-      
-      // Construct local-time ranges
-      const dayStartMs = new Date(`${dateKey}T00:00:00${offset}`).getTime();
+      // Construct local-clock ranges on the same timeline as x-values (ignore offsets)
+      const dayStartMs = parseLocalClockIsoToMs(`${dateKey}T00:00:00`);
+      if (!Number.isFinite(dayStartMs)) continue;
       const eveStart = dayStartMs + 18 * 3600 * 1000; // 18:00 local
       const eveEnd = dayStartMs + 24 * 3600 * 1000;   // next day 00:00 local
       ranges.push([eveStart, eveEnd]);
@@ -117,12 +142,16 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
 
   const bpData = filteredRows.map(r => ({
     value: [r.x, r.dia, r.sys],
+    iso: r.iso,
     itemStyle: { color: colorFor(r), opacity: 0.7 }
   }));
 
   const nightShadowRanges = nightShadows ? computeNightShadows(rows) : [];
 
-  const pulseData = filteredRows.map(r => [r.x, r.pulse]);
+  const pulseData = filteredRows.map(r => ({
+    value: [r.x, r.pulse],
+    iso: r.iso
+  }));
 
   const el = document.getElementById(containerId);
   if (!el) throw new Error(`Container #${containerId} not found`);
@@ -188,19 +217,19 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
       axisPointer: { type: 'line' },
       formatter: (params) => {
         // params is array (bar + line)
-        const time = params?.[0]?.axisValue;
-        const d = new Date(time);
-        // Simple UTC-based formatting (ISO already includes local offset)
-        const header = d.toISOString().replace('T', ' ').slice(0, 19);
+        const first = params?.[0];
+        const iso = first?.data?.iso;
+        const header = iso ? String(iso).replace('T', ' ').slice(0, 16) : formatMsAsLocalClock(first?.axisValue);
         let bp = '';
         let pulse = '';
         for (const p of params) {
           if (p.seriesName === 'Blood Pressure') {
             const dia = p.data.value[1];
             const sys = p.data.value[2];
-            bp = `BP: ${sys}/${dia} mmHg`;
+            bp = `BP: ${sys} / ${dia} mmHg`;
           } else if (p.seriesName === 'Pulse') {
-            pulse = `Pulse: ${p.data[1]} bpm`;
+            const pv = Array.isArray(p.data) ? p.data[1] : p.data?.value?.[1];
+            pulse = `Pulse: ${pv} bpm`;
           }
         }
         return [header, bp, pulse].filter(Boolean).join('<br/>');
@@ -216,7 +245,8 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
         // Show date labels using simple formatting
         formatter: (val) => {
           const d = new Date(val);
-          const month = d.toLocaleString(undefined, { month: 'short' });
+          const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          const month = MONTHS[d.getUTCMonth()];
           const day = String(d.getUTCDate()).padStart(2, '0');
           return `${month} ${day}`;
         },
@@ -346,7 +376,7 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
           lineStyle: { color: 'rgba(255,0,0,0.4)', width: 4 },
           label: {
             show: true,
-            formatter: (p) => String(p.data[1]),
+            formatter: (p) => String(p.data?.value?.[1]),
             color: 'red',
             fontWeight: 'bold',
             fontSize: 10,
