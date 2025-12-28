@@ -1,5 +1,5 @@
 async function renderBPChart(containerId = 'bp-chart', options = {}) {
-  const { showPulse = true, meOnly = false } = options;
+  const { showPulse = true, meOnly = false, nightShadows = false } = options;
   const res = await fetch('/json', { cache: 'no-store' });
   const entries = await res.json();
 
@@ -92,6 +92,50 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
   // Compute highlighted timestamps to match python server logic
   const { morning: morningSet, evening: eveningSet } = computeHighlightedTimestamps(rows);
 
+  // Compute night shading ranges (18:00-24:00 and 00:00-06:00 next day) in Asia/Shanghai
+  function computeNightShadows(rows, tz = 'Asia/Shanghai') {
+    const dates = new Set();
+    for (const r of rows) {
+      try {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).formatToParts(r.t);
+        const obj = Object.fromEntries(parts.map(p => [p.type, p.value]));
+        const dateKey = `${obj.year}-${obj.month}-${obj.day}`;
+        dates.add(dateKey);
+      } catch (e) {
+        const d = new Date(r.t.getTime() + 8 * 3600 * 1000);
+        const dateKey = d.toISOString().slice(0, 10);
+        dates.add(dateKey);
+      }
+    }
+
+    const ranges = [];
+    for (const dateKey of Array.from(dates).sort()) {
+      try {
+        const eveStart = new Date(dateKey + 'T18:00:00+08:00').getTime();
+        const eveEnd = new Date(dateKey + 'T23:59:59+08:00').getTime() + 1; // inclusive end
+        ranges.push([eveStart, eveEnd]);
+        // morning next day: compute next date via Date object
+        const nextDay = new Date(dateKey + 'T00:00:00+08:00');
+        const nextDayYMD = new Date(nextDay.getTime() + 24 * 3600 * 1000);
+        const yyyy = nextDayYMD.getUTCFullYear();
+        const mm = String(nextDayYMD.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(nextDayYMD.getUTCDate()).padStart(2, '0');
+        const nextKey = `${yyyy}-${mm}-${dd}`;
+        const morStart = new Date(nextKey + 'T00:00:00+08:00').getTime();
+        const morEnd = new Date(nextKey + 'T06:00:00+08:00').getTime();
+        ranges.push([morStart, morEnd]);
+      } catch (e) {
+        // ignore malformed dateKey
+      }
+    }
+    return ranges;
+  }
+
   // Optionally filter to the server's morning/evening selected measurements (client-side)
   let filteredRows = rows;
   if (meOnly) {
@@ -115,6 +159,8 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
     value: [r.x, r.dia, r.sys],
     itemStyle: { color: colorFor(r), opacity: 0.7 }
   }));
+
+  const nightShadowRanges = nightShadows ? computeNightShadows(rows) : [];
 
   const pulseData = filteredRows.map(r => [r.x, r.pulse]);
 
@@ -157,6 +203,20 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
       dataZoomInside.end = preservedDZ.end;
       dataZoomSlider.start = preservedDZ.start;
       dataZoomSlider.end = preservedDZ.end;
+    }
+  } else {
+    // Default initial zoom: show last 30 days of available data (user can zoom out)
+    try {
+      const minX = filteredRows[0].x;
+      const maxX = filteredRows[filteredRows.length - 1].x;
+      const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+      const startValue = Math.max(minX, maxX - THIRTY_DAYS_MS);
+      dataZoomInside.startValue = startValue;
+      dataZoomInside.endValue = maxX;
+      dataZoomSlider.startValue = startValue;
+      dataZoomSlider.endValue = maxX;
+    } catch (e) {
+      // If something goes wrong (unexpected data), fall back to full range (do nothing)
     }
   }
 
@@ -256,6 +316,13 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
         },
         data: bpData,
         encode: { x: 0, y: [1, 2] },
+
+        // draw night shading as markArea (if provided)
+        markArea: nightShadowRanges && nightShadowRanges.length ? {
+          silent: true,
+          itemStyle: { color: 'lightgrey', opacity: 0.3 },
+          data: nightShadowRanges.map(r => [{ xAxis: r[0] }, { xAxis: r[1] }])
+        } : undefined,
 
         // SYS label on top of bar
         label: {
