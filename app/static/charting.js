@@ -1,4 +1,5 @@
-async function renderBPChart(containerId = 'bp-chart') {
+async function renderBPChart(containerId = 'bp-chart', options = {}) {
+  const { showPulse = true, meOnly = false } = options;
   const res = await fetch('/json', { cache: 'no-store' });
   const entries = await res.json();
 
@@ -7,6 +8,7 @@ async function renderBPChart(containerId = 'bp-chart') {
       const t = new Date(e.t);
       return {
         t,
+        iso: e.t,
         x: t.getTime(),
         sys: Number(e.sys),
         dia: Number(e.dia),
@@ -23,31 +25,140 @@ async function renderBPChart(containerId = 'bp-chart') {
 
   if (!rows.length) throw new Error('No valid records returned from /json');
 
-  // Morning/evening coloring similar to your python highlight intent
-  const colorFor = (r) => {
-    const h = r.t.getHours();
-    if (h < 8) return '#ffd52b';
-    if (h >= 18) return '#989dfc';
-    return '#b0b0b0';
-  };
+  // Helper: get hour in target timezone (Asia/Shanghai) robustly
+  function hourInTZ(date, tz = 'Asia/Shanghai') {
+    try {
+      const fmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: '2-digit', hour12: false });
+      return Number(fmt.format(date));
+    } catch (e) {
+      // Fallback: fixed +8 shift from UTC (Asia/Shanghai has no DST)
+      return (date.getUTCHours() + 8) % 24;
+    }
+  }
 
-  // Shared y range like python (sys/dia/pulse together)
-  const overallMin = Math.floor(Math.min(...rows.map(r => Math.min(r.sys, r.dia, r.pulse))) - 10);
-  const overallMax = Math.ceil(Math.max(...rows.map(r => Math.max(r.sys, r.dia, r.pulse))) + 10);
+  // Compute highlighted timestamps (first morning 07:00-11:59 and first evening >=21:00 per local date)
+  function computeHighlightedTimestamps(rows, tz = 'Asia/Shanghai') {
+    const grouped = new Map();
+    for (const r of rows) {
+      // get local date components in TZ
+      try {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          hour12: false
+        }).formatToParts(r.t);
+        const obj = Object.fromEntries(parts.map(p => [p.type, p.value]));
+        const dateKey = `${obj.year}-${obj.month}-${obj.day}`;
+        const hour = Number(obj.hour);
+        if (!grouped.has(dateKey)) grouped.set(dateKey, []);
+        grouped.get(dateKey).push({ row: r, hour });
+      } catch (e) {
+        // fallback: compute using UTC +8
+        const d = new Date(r.t.getTime() + 8 * 3600 * 1000);
+        const dateKey = d.toISOString().slice(0, 10);
+        const hour = d.getUTCHours();
+        if (!grouped.has(dateKey)) grouped.set(dateKey, []);
+        grouped.get(dateKey).push({ row: r, hour });
+      }
+    }
+
+    const morning = new Set();
+    const evening = new Set();
+    // rows are already time-sorted; ensure entries per day are processed in order
+    for (const [date, arr] of grouped.entries()) {
+      // sort by original timestamp to pick first occurrences
+      arr.sort((a, b) => a.row.x - b.row.x);
+      for (const item of arr) {
+        if (item.hour >= 7 && item.hour < 12) {
+          morning.add(item.row.iso);
+          break;
+        }
+      }
+      for (const item of arr) {
+        if (item.hour >= 21) {
+          evening.add(item.row.iso);
+          break;
+        }
+      }
+    }
+    return { morning, evening };
+  }
 
   // Data:
   // For bar series with a custom renderItem we’ll draw a vertical rect from dia->sys.
-  const bpData = rows.map(r => ({
+  // Compute highlighted timestamps to match python server logic
+  const { morning: morningSet, evening: eveningSet } = computeHighlightedTimestamps(rows);
+
+  // Optionally filter to the server's morning/evening selected measurements (client-side)
+  let filteredRows = rows;
+  if (meOnly) {
+    const filtered = rows.filter(r => morningSet.has(r.iso) || eveningSet.has(r.iso));
+    filteredRows = filtered.length ? filtered : rows;
+  }
+
+  // Shared y range like python (sys/dia/pulse together) — compute from filtered rows
+  const allVals = filteredRows.flatMap(r => [r.sys, r.dia, r.pulse]);
+  const overallMin = Math.floor(Math.min(...allVals) - 10);
+  const overallMax = Math.ceil(Math.max(...allVals) + 10);
+
+  // Morning/evening coloring similar to python highlight intent
+  const colorFor = (r) => {
+    if (morningSet.has(r.iso)) return '#ffd52b';
+    if (eveningSet.has(r.iso)) return '#989dfc';
+    return '#b0b0b0';
+  };
+
+  const bpData = filteredRows.map(r => ({
     value: [r.x, r.dia, r.sys],
     itemStyle: { color: colorFor(r), opacity: 0.7 }
   }));
 
-  const pulseData = rows.map(r => [r.x, r.pulse]);
+  const pulseData = filteredRows.map(r => [r.x, r.pulse]);
 
   const el = document.getElementById(containerId);
   if (!el) throw new Error(`Container #${containerId} not found`);
 
-  const chart = echarts.init(el, null, { renderer: 'canvas' });
+  // If a chart instance already exists, read its dataZoom state to preserve the
+  // user's current pan/zoom window when re-rendering due to setting changes.
+  const existing = echarts.getInstanceByDom(el);
+  let preservedDZ = null;
+  if (existing) {
+    try {
+      const existingDZ = existing.getOption().dataZoom || [];
+      if (existingDZ.length) {
+        const d0 = existingDZ[0];
+        if (d0.startValue !== undefined && d0.endValue !== undefined) {
+          preservedDZ = { startValue: d0.startValue, endValue: d0.endValue };
+        } else if (d0.start !== undefined && d0.end !== undefined) {
+          preservedDZ = { start: d0.start, end: d0.end };
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  const chart = existing || echarts.init(el, null, { renderer: 'canvas' });
+
+  // Build dataZoom entries, applying preserved window if available.
+  const dataZoomInside = { type: 'inside', xAxisIndex: 0, filterMode: 'none' };
+  const dataZoomSlider = { type: 'slider', xAxisIndex: 0, height: 32, bottom: 28, filterMode: 'none' };
+  if (preservedDZ) {
+    if (preservedDZ.startValue !== undefined) {
+      dataZoomInside.startValue = preservedDZ.startValue;
+      dataZoomInside.endValue = preservedDZ.endValue;
+      dataZoomSlider.startValue = preservedDZ.startValue;
+      dataZoomSlider.endValue = preservedDZ.endValue;
+    } else if (preservedDZ.start !== undefined) {
+      dataZoomInside.start = preservedDZ.start;
+      dataZoomInside.end = preservedDZ.end;
+      dataZoomSlider.start = preservedDZ.start;
+      dataZoomSlider.end = preservedDZ.end;
+    }
+  }
 
   const option = {
     animation: false,
@@ -76,10 +187,7 @@ async function renderBPChart(containerId = 'bp-chart') {
     },
 
     // Pan/zoom + selection window (built-in)
-    dataZoom: [
-      { type: 'inside', xAxisIndex: 0, filterMode: 'none' },  // wheel + drag pan
-      { type: 'slider', xAxisIndex: 0, height: 32, bottom: 28, filterMode: 'none' } // visible window slider
-    ],
+    dataZoom: [dataZoomInside, dataZoomSlider],
 
     xAxis: {
       type: 'time',
@@ -105,9 +213,12 @@ async function renderBPChart(containerId = 'bp-chart') {
       splitLine: { show: true, lineStyle: { type: 'dashed', color: 'rgba(0,0,0,0.18)' } }
     },
 
-    series: [
+    // build series dynamically so we can disable pulse rendering
+    series: (function() {
+      const s = [];
+
       // Custom floating bars (dia->sys)
-      {
+      s.push({
         name: 'Blood Pressure',
         type: 'custom',
         renderItem: (params, api) => {
@@ -120,7 +231,7 @@ async function renderBPChart(containerId = 'bp-chart') {
           const ySys = api.coord([x, sys])[1];
 
           // bar width in px similar to matplotlib "5px feel"
-          const barWidth = 6;
+          const barWidth = 5;
 
           const rectShape = echarts.graphic.clipRectByRect(
             {
@@ -155,10 +266,10 @@ async function renderBPChart(containerId = 'bp-chart') {
           fontWeight: 'bold',
           formatter: (p) => p.data.value[2] // sys
         }
-      },
+      });
 
       // DIA label under bar (second custom series drawing just text)
-      {
+      s.push({
         name: 'DIA Labels',
         type: 'custom',
         silent: true,
@@ -167,10 +278,16 @@ async function renderBPChart(containerId = 'bp-chart') {
           const dia = api.value(1);
 
           const pt = api.coord([x, dia]);
-          // clip to plotting area
+          // clip to plotting area with horizontal margin to avoid axis overlap
           const coord = params.coordSys;
           const xPx = pt[0], yPx = pt[1];
-          if (xPx < coord.x || xPx > coord.x + coord.width || yPx < coord.y || yPx > coord.y + coord.height) {
+          const H_MARGIN = 6; // px margin from left/right plot edges
+          if (
+            xPx < coord.x + H_MARGIN ||
+            xPx > coord.x + coord.width - H_MARGIN ||
+            yPx < coord.y ||
+            yPx > coord.y + coord.height
+          ) {
             return null;
           }
 
@@ -187,33 +304,37 @@ async function renderBPChart(containerId = 'bp-chart') {
             }
           };
         },
-        data: rows.map(r => [r.x, r.dia]),
+        data: filteredRows.map(r => [r.x, r.dia]),
         encode: { x: 0, y: 1 }
-      },
+      });
 
-      // Pulse line + badge labels
-      {
-        name: 'Pulse',
-        type: 'line',
-        data: pulseData,
-        showSymbol: true,
-        symbolSize: 0,
-        lineStyle: { color: 'rgba(255,0,0,0.4)', width: 4 },
-        label: {
-          show: true,
-          formatter: (p) => String(p.data[1]),
-          color: 'red',
-          fontWeight: 'bold',
-          fontSize: 10,
-          backgroundColor: 'rgba(255,255,255,0.88)',
-          borderColor: 'red',
-          borderWidth: 0,
-          borderRadius: 999,
-          padding: [2, 6],
-          position: 'inside'
-        }
+      // Pulse line + badge labels (conditionally added)
+      if (showPulse) {
+        s.push({
+          name: 'Pulse',
+          type: 'line',
+          data: pulseData,
+          showSymbol: true,
+          symbolSize: 0,
+          lineStyle: { color: 'rgba(255,0,0,0.4)', width: 4 },
+          label: {
+            show: true,
+            formatter: (p) => String(p.data[1]),
+            color: 'red',
+            fontWeight: 'bold',
+            fontSize: 10,
+            backgroundColor: 'rgba(255,255,255,0.88)',
+            borderColor: 'red',
+            borderWidth: 0,
+            borderRadius: 999,
+            padding: [2, 6],
+            position: 'inside'
+          }
+        });
       }
-    ]
+
+      return s;
+    })()
   };
 
   chart.setOption(option, true);

@@ -12,7 +12,7 @@
       <div class="flex items-center gap-2 text-xl font-semibold">Blood Pressure and Pulse</div>
     </div>
     <div id="settings-panel" class="hidden mt-2 p-2 border border-gray-300 rounded-md mb-2">
-      <form id="settings-form" hx-post="/update_chart" hx-target="#charts" hx-swap="outerHTML" hx-trigger="change">
+      <form id="settings-form">
         <label class="flex items-center gap-2">
           <input type="checkbox" name="filter" value="me_only" class="toggle-checkbox" />
           <span>Plot only morning/evening measurements</span>
@@ -41,14 +41,30 @@
   
 
   
-  <div id="bp-chart" style="height:520px;"></div>
-  <script>renderBPChart();</script>
+
+    <div id="bp-chart" style="height:520px;"></div>
+  <script>
+    (function() {
+      // Read persisted settings and call renderBPChart with matching options
+      let showPulse = true;
+      let meOnly = false;
+      try {
+        const sp = localStorage.getItem('showPulse');
+        showPulse = sp === null ? true : JSON.parse(sp);
+      } catch (e) {}
+      try {
+        const fm = localStorage.getItem('filter_me_only');
+        meOnly = fm === null ? false : JSON.parse(fm);
+      } catch (e) {}
+
+      renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly) })
+        .catch(err => console.error('renderBPChart error:', err));
+    })();
+  </script>
 
 
 
-  <div id="charts" class="flex flex-col gap-3">
-    <img class="w-full h-auto" alt="Blood Pressure and Pulse" />
-  </div>
+  <!-- Server-generated chart removed in favor of client-side `renderBPChart()` -->
   
   <div>
     <div class="flex items-center justify-center mt-3">
@@ -90,7 +106,7 @@
     panel.classList.toggle('hidden');
   });
 
-  // Load settings from localStorage
+    // Load settings from localStorage
   function loadSettings() {
     const filterCheckbox = document.querySelector('input[name="filter"]');
     const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
@@ -112,26 +128,16 @@
       showPulseCheckbox.checked = true;
     }
 
-    // Toggle pulse columns visibility
+    // Toggle pulse columns visibility and render interactive chart
     togglePulseColumns(showPulseCheckbox.checked);
-
-    // Update chart src with persisted settings
-    const img = document.querySelector('#charts img');
-    let params = [];
-    if (filterState === 'true') {
-      params.push('filter=me_only');
+    try {
+      const showPulse = showPulseState === null ? true : JSON.parse(showPulseState);
+      const meOnly = filterState === null ? false : JSON.parse(filterState);
+      renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly) })
+        .catch(e => console.error('renderBPChart error:', e));
+    } catch (e) {
+      console.error('Error rendering chart on loadSettings:', e);
     }
-    if (nightShadowsState === 'true') {
-      params.push('night_shadows=true');
-    }
-    if (showPulseState === 'true' || showPulseState === null) {
-      params.push('show_pulse=true');
-    } else {
-      params.push('show_pulse=false');
-    }
-    params.push('cb={{ cache_bust }}');
-    const query = params.length ? '?' + params.join('&') : '?cb={{ cache_bust }}';
-    img.src = '/chart/combined.png' + query;
   }
 
   // Save settings to localStorage
@@ -160,14 +166,43 @@
   // Load on page load
   loadSettings();
 
-  // Save on change
+  // Save on change and immediately update the BP chart
   document.querySelectorAll('.toggle-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', saveSettings);
+    checkbox.addEventListener('change', () => {
+      saveSettings();
+      try {
+        const showPulse = JSON.parse(localStorage.getItem('showPulse') || 'true');
+        const meOnly = JSON.parse(localStorage.getItem('filter_me_only') || 'false');
+        // Ensure pulse columns reflect new state
+        const spCheckbox = document.querySelector('input[type="checkbox"][name="show_pulse"]');
+        togglePulseColumns(spCheckbox ? spCheckbox.checked : showPulse);
+        // Re-render the interactive chart with current settings
+        renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly) })
+          .catch(err => console.error('renderBPChart error:', err));
+      } catch (e) {
+        console.error('Error applying settings change:', e);
+      }
+    });
   });
 
-  // Toggle pulse columns on show_pulse change
+  // Toggle pulse columns on show_pulse change (keep original handler for immediate table layout)
   document.querySelector('input[type="checkbox"][name="show_pulse"]').addEventListener('change', function() {
     togglePulseColumns(this.checked);
+  });
+
+  // Re-render chart after HTMX swaps the server-generated charts image
+  document.body.addEventListener('htmx:afterSwap', function(evt) {
+    try {
+      const target = evt.detail && evt.detail.target;
+      if (target && target.id === 'charts') {
+        const showPulse = JSON.parse(localStorage.getItem('showPulse') || 'true');
+        const meOnly = JSON.parse(localStorage.getItem('filter_me_only') || 'false');
+        renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly) })
+          .catch(err => console.error('renderBPChart error:', err));
+      }
+    } catch (e) {
+      console.error('htmx afterSwap handler error', e);
+    }
   });
 </script>
 {% endblock %}
