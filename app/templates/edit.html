@@ -6,9 +6,7 @@
     <h1 class="text-xl">Edit Blood Pressure Data</h1>
   </div>
 
-  <div class="mb-3">
-    <img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={{ cache_bust }}" />
-  </div>
+  <div id="bp-chart" style="height: 520px;" class="mb-3"></div>
 
   <div class="text-sm text-center text-gray-600 mb-3">Editing last {{ entries|length }} of {{ total_count }} total records</div>
 
@@ -91,5 +89,22 @@ function addRow() {
   `;
   tbody.appendChild(newRow);
 }
+
+// Initialize chart on page load
+renderBPChart('bp-chart', { showPulse: true, meOnly: false, nightShadows: false, initialZoomDays: 30 });
+
+// Re-initialize chart after HTMX swap (form save)
+document.addEventListener('htmx:afterSwap', function(event) {
+  if (event.detail.target.id === 'page') {
+    const chartElement = document.getElementById('bp-chart');
+    if (chartElement) {
+      const existingChart = echarts.getInstanceByDom(chartElement);
+      if (existingChart) {
+        existingChart.dispose();
+      }
+      renderBPChart('bp-chart', { showPulse: true, meOnly: false, nightShadows: false, initialZoomDays: 30 });
+    }
+  }
+});
 </script>
 {% endblock %}

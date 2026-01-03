@@ -1,5 +1,5 @@
 async function renderBPChart(containerId = 'bp-chart', options = {}) {
-  const { showPulse = true, meOnly = false, nightShadows = false } = options;
+  const { showPulse = true, meOnly = false, nightShadows = false, initialZoomDays = null } = options;
   const res = await fetch('/json', { cache: 'no-store' });
   const entries = await res.json();
 
@@ -173,7 +173,8 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
   // user's current pan/zoom window when re-rendering due to setting changes.
   const existing = echarts.getInstanceByDom(el);
   let preservedDZ = null;
-  if (existing) {
+  // Don't preserve zoom if initialZoomDays is explicitly set (e.g., edit page reset)
+  if (existing && initialZoomDays === null) {
     try {
       const existingDZ = existing.getOption().dataZoom || [];
       if (existingDZ.length) {
@@ -211,11 +212,12 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
       dataZoomSlider.end = preservedDZ.end;
     }
   } else {
-    // Default initial zoom: show last 30 days of available data, aligned to noon boundaries
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-    // Start at noon of (30 days before latest date - 1 day) or axisMin, whichever is later
-    const thirtyDaysAgoNoon = getNoonMs(dataMaxX - THIRTY_DAYS_MS, -1);
-    const startValue = Math.max(axisMin, thirtyDaysAgoNoon);
+    // Default initial zoom: show last N days of available data, aligned to noon boundaries
+    const zoomDays = initialZoomDays !== null ? initialZoomDays : 30;
+    const ZOOM_DAYS_MS = zoomDays * 24 * 60 * 60 * 1000;
+    // Start at noon of (N days before latest date - 1 day) or axisMin, whichever is later
+    const zoomDaysAgoNoon = getNoonMs(dataMaxX - ZOOM_DAYS_MS, -1);
+    const startValue = Math.max(axisMin, zoomDaysAgoNoon);
     const endValue = axisMax;
     dataZoomInside.startValue = startValue;
     dataZoomInside.endValue = endValue;

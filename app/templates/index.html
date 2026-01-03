@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div id="page" class="max-w-2xl mx-auto">
+<div id="page" class="max-w-4xl mx-auto">
    <div class="flex justify-between items-center mb-3">
      <div class="flex gap-2">
        <button id="settings-toggle" class="px-2 py-1 text-base rounded-md">
@@ -114,11 +114,11 @@
       <tbody>
         {% for day in grouped_data %}
         <tr class="font-mono even:bg-blue-50 hover:bg-gray-100 transition-colors duration-200">
-          <td class="border border-gray-300 px-4 text-center text-sm">{{ day.date }}</td>
-          <td class="border border-gray-300 px-4 text-center text-sm whitespace-pre">{% if day.morning %}{{ "%3d"|format(day.morning.sys) }} <span class="text-gray-400">/</span> {{ "%3d"|format(day.morning.dia) }}{% endif %}</td>
-          <td class="border border-gray-300 px-4 text-center text-sm whitespace-pre pulse-column">{% if day.morning %}{{ day.morning.pulse }}{% endif %}</td>
-          <td class="border border-gray-300 px-4 text-center text-sm whitespace-pre">{% if day.evening %}{{ "%3d"|format(day.evening.sys) }} <span class="text-gray-400">/</span> {{ "%3d"|format(day.evening.dia) }}{% endif %}</td>
-          <td class="border border-gray-300 px-4 text-center text-sm whitespace-pre pulse-column">{% if day.evening %}{{ day.evening.pulse }}{% endif %}</td>
+          <td class="border border-gray-300 px-6 text-center text-sm">{{ day.date }}</td>
+          <td class="border border-gray-300 px-6 text-center text-sm whitespace-pre">{% if day.morning %}{{ "%3d"|format(day.morning.sys) }} <span class="text-gray-400">/</span> {{ "%3d"|format(day.morning.dia) }}{% endif %}</td>
+          <td class="border border-gray-300 px-6 text-center text-sm whitespace-pre pulse-column">{% if day.morning %}{{ day.morning.pulse }}{% endif %}</td>
+          <td class="border border-gray-300 px-6 text-center text-sm whitespace-pre">{% if day.evening %}{{ "%3d"|format(day.evening.sys) }} <span class="text-gray-400">/</span> {{ "%3d"|format(day.evening.dia) }}{% endif %}</td>
+          <td class="border border-gray-300 px-6 text-center text-sm whitespace-pre pulse-column">{% if day.evening %}{{ day.evening.pulse }}{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

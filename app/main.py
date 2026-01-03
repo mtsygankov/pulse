@@ -430,9 +430,7 @@ def chart_combined(
         ]
     else:
         filtered_entries = entries
-    buf = plot_pressure(
-        filtered_entries, night_shadows=night_shadows, show_pulse=show_pulse
-    )
+    buf = plot_pressure( filtered_entries, night_shadows=night_shadows, show_pulse=show_pulse )
     return StreamingResponse(buf, media_type="image/png")
 
 
