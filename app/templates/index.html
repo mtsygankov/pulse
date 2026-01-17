@@ -11,7 +11,7 @@
       </div>
       <div class="flex items-center gap-2 text-xl font-semibold">Blood Pressure and Pulse</div>
     </div>
-    <div id="settings-panel" class="hidden mt-2 p-2 border border-gray-300 rounded-md mb-2">
+     <div id="settings-panel" class="hidden mt-2 p-2 border border-gray-300 dark:border-gray-600 rounded-md mb-2">
       <form id="settings-form">
         <label class="flex items-center gap-2">
           <input type="checkbox" name="filter" value="me_only" class="toggle-checkbox" />
@@ -43,13 +43,13 @@
       <div class="tz-badge {{ timezone_info.badge_class }}" id="tz-badge">
         {{ timezone_info.city }}
       </div>
-      <input name="line" type="text" class="input-with-border py-2 pl-3 pr-3 text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g.: 120 80 56 125 85 60" inputmode="numeric" value="{{ input_value or '' }}" />
+       <input name="line" type="text" class="input-with-border py-2 pl-3 pr-3 text-base border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g.: 120 80 56 125 85 60" inputmode="numeric" value="{{ input_value or '' }}" />
     </div>
     <button type="submit" class="text-base bg-blue-500 font-bold text-white rounded-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 px-4 py-2">Save</button>
   </form>
   
   <!--div class="min-h-[1.2em] text-gray-600 mb-1.5">{{ status_msg or "" }}</div-->
-  <div class="text-sm text-gray-600 mb-3">Records: {{ entries_count }}</div>
+   <div class="text-sm text-gray-600 dark:text-gray-400 mb-3">Records: {{ entries_count }}</div>
   
 
   
@@ -94,31 +94,31 @@
   
   <div>
     <div class="flex items-center justify-center mt-3">
-      <div class="text-lg text-gray-600 font-semibold mb-2"><span class="font-mono">Daily measurements </span><a href="/edit" class="mx-0 px-4 py-2 font-bold text-sm bg-gray-200 rounded-md hover:bg-blue-500 hover:text-white">Edit</a></div>
+       <div class="text-lg text-gray-600 dark:text-gray-400 font-semibold mb-2"><span class="font-mono text-gray-900 dark:text-gray-100">Daily measurements </span><a href="/edit" class="mx-0 px-4 py-2 font-bold text-sm bg-gray-200 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-blue-600 rounded-md hover:bg-blue-500 hover:text-white">Edit</a></div>
     </div>
     <div class="overflow-x-auto">
-      <table class="w-auto border-collapse border border-gray-300 mx-auto mt-1 rounded-none overflow-hidden shadow-lg">
+      <table class="w-auto border-collapse border border-gray-300 dark:border-gray-600 mx-auto mt-1 rounded-none overflow-hidden shadow-lg">
       <thead class="font-mono">
         <tr>
-          <th rowspan="2" class="py-1 border-gray-300 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Date</th>
-          <th colspan="2" class="py-1 border-gray-300 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Morning</th>
-          <th colspan="2" class="py-1 border-gray-300 text-center text-sm bg-gray-300 font-semibold text-gray-800 sm:px-2.5">Evening</th>
+          <th rowspan="2" class="py-1 border-gray-300 dark:border-gray-600 text-center text-sm bg-gray-300 dark:bg-gray-700 font-semibold text-gray-800 dark:text-gray-200 sm:px-2.5">Date</th>
+          <th colspan="2" class="py-1 border-gray-300 dark:border-gray-600 text-center text-sm bg-gray-300 dark:bg-gray-700 font-semibold text-gray-800 dark:text-gray-200 sm:px-2.5">Morning</th>
+          <th colspan="2" class="py-1 border-gray-300 dark:border-gray-600 text-center text-sm bg-gray-300 dark:bg-gray-700 font-semibold text-gray-800 dark:text-gray-200 sm:px-2.5">Evening</th>
         </tr>
         <tr>
-          <th class="border-gray-300 text-center text-sm bg-gray-300">Pressure</th>
-          <th class="border-gray-300 text-center text-sm bg-gray-300 pulse-column">Pulse</th>
-          <th class="border-gray-300 text-center text-sm bg-gray-300">Pressure</th>
-          <th class="border-gray-300 text-center text-sm bg-gray-300 pulse-column">Pulse</th>
+          <th class="border-gray-300 dark:border-gray-600 text-center text-sm bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200">Pressure</th>
+          <th class="border-gray-300 dark:border-gray-600 text-center text-sm bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 pulse-column">Pulse</th>
+          <th class="border-gray-300 dark:border-gray-600 text-center text-sm bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200">Pressure</th>
+          <th class="border-gray-300 dark:border-gray-600 text-center text-sm bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 pulse-column">Pulse</th>
         </tr>
       </thead>
       <tbody>
         {% for day in grouped_data %}
-        <tr class="font-mono even:bg-blue-50 hover:bg-gray-100 transition-colors duration-200">
-          <td class="border border-gray-300 px-6 text-center text-sm">{{ day.date }}</td>
-          <td class="border border-gray-300 px-6 text-center text-sm whitespace-pre">{% if day.morning %}{{ "%3d"|format(day.morning.sys) }} <span class="text-gray-400">/</span> {{ "%3d"|format(day.morning.dia) }}{% endif %}</td>
-          <td class="border border-gray-300 px-6 text-center text-sm whitespace-pre pulse-column">{% if day.morning %}{{ day.morning.pulse }}{% endif %}</td>
-          <td class="border border-gray-300 px-6 text-center text-sm whitespace-pre">{% if day.evening %}{{ "%3d"|format(day.evening.sys) }} <span class="text-gray-400">/</span> {{ "%3d"|format(day.evening.dia) }}{% endif %}</td>
-          <td class="border border-gray-300 px-6 text-center text-sm whitespace-pre pulse-column">{% if day.evening %}{{ day.evening.pulse }}{% endif %}</td>
+        <tr class="font-mono even:bg-blue-50 dark:even:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+          <td class="border border-gray-300 dark:border-gray-600 px-6 text-center text-sm text-gray-900 dark:text-gray-100">{{ day.date }}</td>
+          <td class="border border-gray-300 dark:border-gray-600 px-6 text-center text-sm whitespace-pre text-gray-900 dark:text-gray-100">{% if day.morning %}{{ "%3d"|format(day.morning.sys) }} <span class="text-gray-400 dark:text-gray-500">/</span> {{ "%3d"|format(day.morning.dia) }}{% endif %}</td>
+          <td class="border border-gray-300 dark:border-gray-600 px-6 text-center text-sm whitespace-pre pulse-column text-gray-900 dark:text-gray-100">{% if day.morning %}{{ day.morning.pulse }}{% endif %}</td>
+          <td class="border border-gray-300 dark:border-gray-600 px-6 text-center text-sm whitespace-pre text-gray-900 dark:text-gray-100">{% if day.evening %}{{ "%3d"|format(day.evening.sys) }} <span class="text-gray-400 dark:text-gray-500">/</span> {{ "%3d"|format(day.evening.dia) }}{% endif %}</td>
+          <td class="border border-gray-300 dark:border-gray-600 px-6 text-center text-sm whitespace-pre pulse-column text-gray-900 dark:text-gray-100">{% if day.evening %}{{ day.evening.pulse }}{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -141,3 +141,104 @@
     margin-right: 12px;
   }
 }
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  /* Table header styling */
+  .bg-gray-300 {
+    background-color: #374151 !important;
+  }
+  
+  .text-gray-800 {
+    color: #f3f4f6 !important;
+  }
+  
+  /* Table row styling */
+  .even\:bg-blue-50:nth-child(even) {
+    background-color: #1f2937 !important;
+  }
+  
+  .hover\:bg-gray-100:hover {
+    background-color: #374151 !important;
+  }
+  
+  /* Table borders */
+  .border-gray-300 {
+    border-color: #4b5563 !important;
+  }
+  
+  /* Input field styling for edit table */
+  .bg-transparent {
+    background-color: #374151 !important;
+    color: #f3f4f6 !important;
+  }
+  
+  /* Text color adjustments */
+  .text-gray-400 {
+    color: #9ca3af !important;
+  }
+  
+  .text-gray-600 {
+    color: #9ca3af !important;
+  }
+  
+  /* Button styling in dark mode */
+  .bg-gray-200 {
+    background-color: #4b5563 !important;
+    color: #f3f4f6 !important;
+  }
+  
+  .bg-gray-200:hover {
+    background-color: #6b7280 !important;
+  }
+  
+  /* Timezone dropdown */
+  .tz-dropdown {
+    background-color: #374151 !important;
+    color: #f3f4f6 !important;
+    border-color: #4b5563 !important;
+  }
+  
+  .tz-dropdown:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  /* Input fields */
+  .input-with-border {
+    background-color: #1f2937 !important;
+    color: #f3f4f6 !important;
+    border-color: #4b5563 !important;
+  }
+  
+  .input-with-border:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  /* Form input styling */
+  input[type="text"], 
+  input[type="number"] {
+    background-color: #374151 !important;
+    color: #f3f4f6 !important;
+    border-color: #4b5563 !important;
+  }
+  
+  input[type="text"]:focus, 
+  input[type="number"]:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+  }
+  
+  /* Settings panel */
+  #settings-panel {
+    background-color: #1f2937 !important;
+    border-color: #4b5563 !important;
+  }
+  
+  /* Status message styling */
+  .bg-yellow-50 {
+    background-color: #78350f !important;
+    color: #fef3c7 !important;
+  }
+}
