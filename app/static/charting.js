@@ -396,12 +396,12 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
           label: {
             show: true,
             formatter: (p) => String(p.data?.value?.[1]),
-            color: 'red',
+            color: 'gray',
             fontWeight: 'bold',
             fontSize: 10,
-            backgroundColor: 'rgba(255,255,255,0.88)',
-            borderColor: 'red',
-            borderWidth: 0,
+            backgroundColor: 'rgba(255,0,0,0.2)',
+            // borderColor: 'rgba(255,255,255,0.3)',
+            borderWidth: 1,
             borderRadius: 999,
             padding: [2, 6],
             position: 'inside'
