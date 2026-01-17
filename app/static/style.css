@@ -49,6 +49,35 @@
   left: 22px;
 }
 
+/* Timezone badge styles */
+.input-wrapper {
+  position: relative;
+}
+
+.tz-badge {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.tz-badge--shanghai {
+  background-color: #3b82f6;
+}
+
+.tz-badge--moscow {
+  background-color: #ef4444;
+}
+
 /* Mobile responsiveness for settings panel */
 @media (max-width: 480px) {
   #settings-panel {
@@ -65,5 +94,11 @@
 
   .toggle-checkbox {
     flex-shrink: 0;
+  }
+
+  .tz-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    left: 8px;
   }
 }

@@ -8,9 +8,22 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-import os, io, json, time, fcntl, datetime, shutil
+import os
+import io
+import json
+import time
+import fcntl
+import datetime
+import shutil
 from zoneinfo import ZoneInfo
 from typing import List
+
+import matplotlib
+
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 import matplotlib
 
@@ -32,9 +45,22 @@ def save_current_timezone(tz_name):
         json.dump(config, f, indent=2)
 
 
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+def get_timezone_info(tz_name: str) -> dict:
+    """Get timezone display information including city name and badge color."""
+    tz_mapping = {
+        "Asia/Shanghai": {
+            "city": "Shanghai",
+            "badge_class": "tz-badge--shanghai",
+            "utc_offset": "UTC+8",
+        },
+        "Europe/Moscow": {
+            "city": "Moscow",
+            "badge_class": "tz-badge--moscow",
+            "utc_offset": "UTC+3",
+        },
+    }
+    return tz_mapping.get(tz_name, tz_mapping["Asia/Shanghai"])
+
 
 # Настройки ######################################################
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -349,6 +375,7 @@ def index(request: Request, status_msg: str | None = None):
     grouped_data = group_measurements_by_date(entries)
     cache_bust = int(time.time())
     current_timezone = load_current_timezone()
+    timezone_info = get_timezone_info(current_timezone)
     return templates.TemplateResponse(
         "index.html",
         {
@@ -358,6 +385,7 @@ def index(request: Request, status_msg: str | None = None):
             "cache_bust": cache_bust,
             "grouped_data": grouped_data,
             "current_timezone": current_timezone,
+            "timezone_info": timezone_info,
         },
     )
 
@@ -424,6 +452,8 @@ def add(
         entries = read_all()
         grouped_data = group_measurements_by_date(entries)
         cache_bust = int(time.time())
+        current_timezone = load_current_timezone()
+        timezone_info = get_timezone_info(current_timezone)
         return templates.TemplateResponse(
             "index.html",
             {
@@ -433,6 +463,8 @@ def add(
                 "cache_bust": cache_bust,
                 "grouped_data": grouped_data,
                 "input_value": input_value,
+                "current_timezone": current_timezone,
+                "timezone_info": timezone_info,
             },
         )
     # Иначе — обычный PRG (POST/Redirect/GET)
@@ -536,7 +568,7 @@ def save_edit(
     for i in range(len(t)):
         try:
             # Validate timestamp
-            dt = parse_iso(t[i])
+            parse_iso(t[i])
             # Validate values
             validate_values(sys[i], dia[i], pulse[i])
             entry = {
