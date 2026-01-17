@@ -43,12 +43,12 @@
     <form id="entry-form" class="flex gap-2 flex-wrap mb-2"
     action="/add" method="post"
     hx-post="/add" hx-target="#page" hx-swap="outerHTML" hx-disabled-elt="button">
-    <div class="relative flex-1 min-w-[220px] input-wrapper">
+    <div class="input-flex-wrapper flex-1 min-w-[220px]">
       <input type="hidden" name="local_tz" id="local_tz_input" />
       <div class="tz-badge {{ timezone_info.badge_class }}" id="tz-badge">
         {{ timezone_info.city }}
       </div>
-      <input name="line" type="text" class="w-full pl-20 pr-3 py-2 text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g.: 120 80 56 125 85 60" inputmode="numeric" value="{{ input_value or '' }}" />
+      <input name="line" type="text" class="input-with-border py-2 pl-3 pr-3 text-base border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g.: 120 80 56 125 85 60" inputmode="numeric" value="{{ input_value or '' }}" />
     </div>
     <button type="submit" class="text-base bg-blue-500 font-bold text-white rounded-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 px-4 py-2">Save</button>
   </form>
