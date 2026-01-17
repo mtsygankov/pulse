@@ -15,6 +15,7 @@ import time
 import fcntl
 import datetime
 import shutil
+import logging
 from zoneinfo import ZoneInfo
 from typing import List
 
@@ -26,6 +27,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 import matplotlib
+
+logging.basicConfig(level=logging.INFO)
 
 
 def load_current_timezone():
@@ -40,26 +43,66 @@ def load_current_timezone():
 
 
 def save_current_timezone(tz_name):
-    config = {"current_timezone": tz_name}
+    # Load existing config to preserve timezone mappings
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            config = json.load(f)
+    except Exception:
+        config = {}
+    
+    # Update current timezone while preserving other settings
+    config["current_timezone"] = tz_name
+    
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
 
 
 def get_timezone_info(tz_name: str) -> dict:
     """Get timezone display information including city name and badge color."""
-    tz_mapping = {
-        "Asia/Shanghai": {
-            "city": "Shanghai",
-            "badge_class": "tz-badge--shanghai",
-            "utc_offset": "UTC+8",
-        },
-        "Europe/Moscow": {
-            "city": "Moscow",
-            "badge_class": "tz-badge--moscow",
-            "utc_offset": "UTC+3",
-        },
-    }
-    return tz_mapping.get(tz_name, tz_mapping["Asia/Shanghai"])
+    logging.info(f"DEBUG: get_timezone_info called with {tz_name}")
+    # Load timezone mappings from config
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            config = json.load(f)
+        tz_mapping = config.get("timezones", {})
+        logging.info(f"DEBUG: loaded tz_mapping: {tz_mapping}")
+        # Fallback to hardcoded defaults if config is missing timezones
+        if not tz_mapping:
+            tz_mapping = {
+                "Asia/Shanghai": {
+                    "city": "Shanghai",
+                    "badgeClass": "tz-badge--shanghai",
+                    "utc_offset": "UTC+8",
+                },
+                "Europe/Moscow": {
+                    "city": "Moscow",
+                    "badgeClass": "tz-badge--moscow",
+                    "utc_offset": "UTC+3",
+                },
+            }
+    except Exception as e:
+        logging.info(f"DEBUG: Exception loading config: {e}")
+        # Fallback to hardcoded defaults if config loading fails
+        tz_mapping = {
+            "Asia/Shanghai": {
+                "city": "Shanghai",
+                "badgeClass": "tz-badge--shanghai",
+                "utc_offset": "UTC+8",
+            },
+            "Europe/Moscow": {
+                "city": "Moscow",
+                "badgeClass": "tz-badge--moscow",
+                "utc_offset": "UTC+3",
+            },
+        }
+
+    result = tz_mapping.get(tz_name, tz_mapping.get("Asia/Shanghai", {
+        "city": "Shanghai",
+        "badge_class": "tz-badge--shanghai",
+        "utc_offset": "UTC+8",
+    }))
+    logging.info(f"DEBUG: returning timezone_info: {result}")
+    return result
 
 
 # Настройки ######################################################
@@ -371,11 +414,14 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, status_msg: str | None = None):
+    logging.info("DEBUG: Index route called")
     entries = read_all()
     grouped_data = group_measurements_by_date(entries)
     cache_bust = int(time.time())
     current_timezone = load_current_timezone()
+    logging.info(f"DEBUG: current_timezone loaded: {current_timezone}")
     timezone_info = get_timezone_info(current_timezone)
+    logging.info(f"DEBUG: timezone_info for index: {timezone_info}")
     return templates.TemplateResponse(
         "index.html",
         {
@@ -503,6 +549,32 @@ def update_chart(
     show_pulse_param = f"&show_pulse={str(show_pulse).lower()}"
     html_content = f'<div id="charts" class="flex flex-col gap-3"><img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={cache_bust}{filter_param}{night_shadows_param}{show_pulse_param}" /></div>'
     return HTMLResponse(content=html_content)
+
+
+@app.get("/api/timezones")
+def get_timezones():
+    """API endpoint to get available timezones from config"""
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            config = json.load(f)
+        return config
+    except Exception:
+        # Return fallback timezone config if loading fails
+        return {
+            "current_timezone": "Asia/Shanghai",
+            "timezones": {
+                "Asia/Shanghai": {
+                    "city": "Shanghai",
+                    "badge_class": "tz-badge--shanghai",
+                    "utc_offset": "UTC+8"
+                },
+                "Europe/Moscow": {
+                    "city": "Moscow",
+                    "badge_class": "tz-badge--moscow",
+                    "utc_offset": "UTC+3"
+                }
+            }
+        }
 
 
 @app.post("/set_timezone")

@@ -28,14 +28,9 @@
         </label>
          <div class="mt-2">
            <label class="block text-sm font-semibold mb-1">Local Timezone:</label>
-           <label class="flex items-center gap-2">
-             <input type="radio" name="local_tz" value="Asia/Shanghai" class="tz-radio" hx-post="/set_timezone" hx-trigger="change" hx-vals="js:{local_tz: this.value}" />
-             <span>Shanghai (UTC+8)</span>
-           </label>
-           <label class="flex items-center gap-2">
-             <input type="radio" name="local_tz" value="Europe/Moscow" class="tz-radio" hx-post="/set_timezone" hx-trigger="change" hx-vals="js:{local_tz: this.value}" />
-             <span>Moscow (UTC+3)</span>
-           </label>
+           <select name="local_tz" id="timezone-dropdown" class="tz-dropdown px-2 py-1 border border-gray-300 rounded-md" hx-post="/set_timezone" hx-trigger="change" hx-vals="js:{local_tz: this.value}">
+             <!-- Timezone options will be populated by JavaScript -->
+           </select>
          </div>
       </form>
     </div>
@@ -61,12 +56,13 @@
 
     <div id="bp-chart" style="height:520px;"></div>
   <script>
+    console.log('DEBUG: template variables - current_timezone: {{ current_timezone }}, timezone_info: {{ timezone_info | tojson }}');
     (function() {
       // Read persisted settings and call renderBPChart with matching options
       let showPulse = true;
       let meOnly = false;
       let nightShadows = false;
-       let localTz = '{{ current_timezone }}';
+       let localTz = localStorage.getItem('local_tz') || '{{ current_timezone }}';
       try {
         const sp = localStorage.getItem('showPulse');
         showPulse = sp === null ? true : JSON.parse(sp);
@@ -78,9 +74,6 @@
       try {
         const ns = localStorage.getItem('night_shadows');
         nightShadows = ns === null ? false : JSON.parse(ns);
-      } catch (e) {}
-      try {
-        localTz = '{{ current_timezone }}';
       } catch (e) {}
 
        // Set localStorage to server timezone to inherit it
@@ -144,60 +137,131 @@
     const badge = document.getElementById('tz-badge');
     if (!badge) return;
     
-    const tzMapping = {
-      'Asia/Shanghai': {
-        city: 'Shanghai',
-        badgeClass: 'tz-badge--shanghai'
-      },
-      'Europe/Moscow': {
-        city: 'Moscow',
-        badgeClass: 'tz-badge--moscow'
-      }
-    };
-    
-    const tzInfo = tzMapping[tzName] || tzMapping['Asia/Shanghai'];
-    
-    // Remove existing badge classes
-    badge.className = 'tz-badge';
-    // Add new badge class
-    badge.classList.add(tzInfo.badgeClass);
-    // Update badge text
-    badge.textContent = tzInfo.city;
+    // Load timezone mapping from config via API
+    fetch('/api/timezones')
+      .then(response => response.json())
+      .then(config => {
+        const tzMapping = config.timezones || {};
+        const tzInfo = tzMapping[tzName] || tzMapping['Asia/Shanghai'] || {
+          city: 'Shanghai',
+          badgeClass: 'tz-badge--shanghai'
+        };
+        
+        // Remove existing badge classes
+        badge.className = 'tz-badge';
+        // Add new badge class
+        badge.classList.add(tzInfo.badgeClass);
+        // Update badge text
+        badge.textContent = tzInfo.city;
+      })
+      .catch(() => {
+        // Fallback to hardcoded defaults
+        const tzMapping = {
+          'Asia/Shanghai': {
+            city: 'Shanghai',
+            badgeClass: 'tz-badge--shanghai'
+          },
+          'Europe/Moscow': {
+            city: 'Moscow',
+            badgeClass: 'tz-badge--moscow'
+          }
+        };
+        const tzInfo = tzMapping[tzName] || tzMapping['Asia/Shanghai'];
+        
+        // Remove existing badge classes
+        badge.className = 'tz-badge';
+        // Add new badge class
+        badge.classList.add(tzInfo.badgeClass);
+        // Update badge text
+        badge.textContent = tzInfo.city;
+      });
+  }
+  
+  // Populate timezone dropdown
+  function populateTimezoneDropdown() {
+    fetch('/api/timezones')
+      .then(response => response.json())
+      .then(config => {
+        const dropdown = document.getElementById('timezone-dropdown');
+        if (!dropdown) return;
+        
+        const tzMapping = config.timezones || {};
+        const currentTz = localStorage.getItem('local_tz') || '{{ current_timezone }}';
+        
+        // Clear existing options
+        dropdown.innerHTML = '';
+        
+        // Add options from config
+        for (const [tzName, tzInfo] of Object.entries(tzMapping)) {
+          const option = document.createElement('option');
+          option.value = tzName;
+          option.textContent = `${tzInfo.city} (${tzInfo.utc_offset})`;
+          if (tzName === currentTz) {
+            option.selected = true;
+          }
+          dropdown.appendChild(option);
+        }
+      })
+      .catch(() => {
+        // Fallback to hardcoded defaults
+        const dropdown = document.getElementById('timezone-dropdown');
+        if (!dropdown) return;
+        
+        const timezones = [
+          { name: 'Asia/Shanghai', city: 'Shanghai', offset: 'UTC+8' },
+          { name: 'Europe/Moscow', city: 'Moscow', offset: 'UTC+3' },
+          { name: 'America/New_York', city: 'New York', offset: 'UTC-5' }
+        ];
+        const currentTz = localStorage.getItem('local_tz') || '{{ current_timezone }}';
+        
+        // Clear existing options
+        dropdown.innerHTML = '';
+        
+        // Add fallback options
+        timezones.forEach(tz => {
+          const option = document.createElement('option');
+          option.value = tz.name;
+          option.textContent = `${tz.city} (${tz.offset})`;
+          if (tz.name === currentTz) {
+            option.selected = true;
+          }
+          dropdown.appendChild(option);
+        });
+      });
   }
 
     // Load settings from localStorage
-  function loadSettings() {
-    const filterCheckbox = document.querySelector('input[name="filter"]');
-    const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
-    const showPulseCheckbox = document.querySelector('input[type="checkbox"][name="show_pulse"]');
-    const tzRadios = document.querySelectorAll('input[name="local_tz"]');
-
-    const filterState = localStorage.getItem('filter_me_only');
-    const nightShadowsState = localStorage.getItem('night_shadows');
-    const showPulseState = localStorage.getItem('showPulse');
-     const localTzState = '{{ current_timezone }}';
-
-    if (filterState !== null) {
-      filterCheckbox.checked = JSON.parse(filterState);
-    }
-    if (nightShadowsState !== null) {
-      nightShadowsCheckbox.checked = JSON.parse(nightShadowsState);
-    }
-    if (showPulseState !== null) {
-      showPulseCheckbox.checked = JSON.parse(showPulseState);
-    } else {
-      showPulseCheckbox.checked = true;
-    }
-
-    // Set timezone radio
-    tzRadios.forEach(radio => {
-      if (radio.value === localTzState) {
-        radio.checked = true;
+    function loadSettings() {
+      const filterCheckbox = document.querySelector('input[name="filter"]');
+      const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
+      const showPulseCheckbox = document.querySelector('input[type="checkbox"][name="show_pulse"]');
+      const tzDropdown = document.getElementById('timezone-dropdown');
+  
+      const filterState = localStorage.getItem('filter_me_only');
+      const nightShadowsState = localStorage.getItem('night_shadows');
+      const showPulseState = localStorage.getItem('showPulse');
+       const localTzState = '{{ current_timezone }}';
+  
+      if (filterState !== null) {
+        filterCheckbox.checked = JSON.parse(filterState);
       }
-    });
-
-    // Update timezone badge on load
-    updateTimezoneBadge(localTzState);
+      if (nightShadowsState !== null) {
+        nightShadowsCheckbox.checked = JSON.parse(nightShadowsState);
+      }
+      if (showPulseState !== null) {
+        showPulseCheckbox.checked = JSON.parse(showPulseState);
+      } else {
+        showPulseCheckbox.checked = true;
+      }
+  
+      // Populate and set timezone dropdown
+      populateTimezoneDropdown();
+      if (tzDropdown) {
+        tzDropdown.value = localTzState;
+      }
+  
+      // Update timezone badge on load
+      updateTimezoneBadge(localTzState);
 
     // Toggle pulse columns visibility and render interactive chart
     togglePulseColumns(showPulseCheckbox.checked);
@@ -217,16 +281,16 @@
     const filterCheckbox = document.querySelector('input[name="filter"]');
     const nightShadowsCheckbox = document.querySelector('input[name="night_shadows"]');
     const showPulseCheckbox = document.querySelector('input[type="checkbox"][name="show_pulse"]');
-    const selectedTz = document.querySelector('input[name="local_tz"]:checked');
+    const tzDropdown = document.getElementById('timezone-dropdown');
 
     localStorage.setItem('filter_me_only', JSON.stringify(filterCheckbox.checked));
     localStorage.setItem('night_shadows', JSON.stringify(nightShadowsCheckbox.checked));
     localStorage.setItem('showPulse', JSON.stringify(showPulseCheckbox.checked));
-    if (selectedTz) {
-      localStorage.setItem('local_tz', selectedTz.value);
+    if (tzDropdown) {
+      localStorage.setItem('local_tz', tzDropdown.value);
       // Update hidden input for form submission
       const localTzInput = document.getElementById('local_tz_input');
-      if (localTzInput) localTzInput.value = selectedTz.value;
+      if (localTzInput) localTzInput.value = tzDropdown.value;
     }
   }
 
@@ -265,14 +329,20 @@
     });
   });
 
-  // Handle timezone radio changes
-  document.querySelectorAll('.tz-radio').forEach(radio => {
-    radio.addEventListener('change', () => {
+  // Handle timezone dropdown changes
+  const tzDropdown = document.getElementById('timezone-dropdown');
+  if (tzDropdown) {
+    tzDropdown.addEventListener('change', () => {
       saveSettings();
       // Update badge when timezone changes
-      updateTimezoneBadge(radio.value);
+      updateTimezoneBadge(tzDropdown.value);
+      // Re-populate dropdown after HTMX response to maintain options
+      setTimeout(() => {
+        populateTimezoneDropdown();
+        tzDropdown.value = localStorage.getItem('local_tz') || '{{ current_timezone }}';
+      }, 100);
     });
-  });
+  }
 
   // Toggle pulse columns on show_pulse change (keep original handler for immediate table layout)
   document.querySelector('input[type="checkbox"][name="show_pulse"]').addEventListener('change', function() {
@@ -299,6 +369,11 @@
       console.error('htmx afterSwap handler error', e);
     }
   });
+
+  console.log('DEBUG: tz-badge element: ', document.getElementById('tz-badge'));
+  console.log('DEBUG: tz-badge class: ', document.getElementById('tz-badge')?.className);
+  console.log('DEBUG: tz-badge text: ', document.getElementById('tz-badge')?.textContent);
+  console.log('DEBUG: tz-badge background: ', getComputedStyle(document.getElementById('tz-badge'))?.backgroundColor);
 </script>
 {% endblock %}
 

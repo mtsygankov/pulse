@@ -1,3 +1,20 @@
 {
-  "current_timezone": "Europe/Moscow"
+  "current_timezone": "Europe/Moscow",
+  "timezones": {
+    "Asia/Shanghai": {
+      "city": "Shanghai",
+      "badgeClass": "tz-badge--shanghai",
+      "utc_offset": "UTC+8"
+    },
+    "Europe/Moscow": {
+      "city": "Moscow",
+      "badgeClass": "tz-badge--moscow",
+      "utc_offset": "UTC+3"
+    },
+    "America/New_York": {
+      "city": "New York",
+      "badgeClass": "tz-badge--newyork",
+      "utc_offset": "UTC-5"
+    }
+  }
 }
