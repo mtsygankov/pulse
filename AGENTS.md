@@ -11,7 +11,7 @@ The primary purpose of Pulse is to facilitate personal health monitoring by:
 - Offering a simple web interface for data entry and review.
 - Ensuring data validation and safe concurrent access to the NDJSON file.
 
-The application supports timezone handling (hardcoded to Asia/Shanghai UTC+8) and both manual form input and text-based entry for flexibility.
+The application supports timezone handling with a configurable current timezone saved on the server, defaulting to Asia/Shanghai, and both manual form input and text-based entry for flexibility.
 
 ## Project Structure
 
@@ -84,3 +84,35 @@ The project uses `uv` for dependency management (evidenced by `uv.lock`).
   - Handle exceptions gracefully in routes.
 - **Deployment**: Suitable for local/personal use. For production, consider database migration (e.g., SQLite/PostgreSQL) instead of file-based storage, and add proper logging.
 - **Contributions**: Document changes in `README.md`. Use `uv` for dependency management to maintain `uv.lock` consistency.
+
+## Build, Lint, and Test Commands
+
+- **Install Dependencies**: `uv sync` (installs all dependencies from `pyproject.toml`).
+- **Run the Application**: `uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8002` (starts the FastAPI server with auto-reload).
+- **Lint Code**: Use Ruff for linting (if added to dependencies): `uv run ruff check`. Fix issues with `uv run ruff check --fix`.
+- **Format Code**: `uv run ruff format` (auto-formats code to PEP8 standards).
+- **Run Tests**: Execute `python test_logic.py` (runs the test script for data logic). For integration tests, use `uv run pytest` if pytest is added.
+- **Run a Single Test**: If using pytest with test files, `uv run pytest tests/test_file.py::TestClass::test_method`. Currently, modify `test_logic.py` to run specific functions manually (e.g., add `if __name__ == "__main__": test_function()`).
+
+## Code Style Guidelines
+
+- **Imports**: Group imports as standard library (e.g., `os`, `json`), third-party (e.g., `fastapi`, `matplotlib`), and local modules. Use absolute imports. Avoid wildcard imports (`from module import *`).
+- **Formatting**: Follow PEP8. Use 4 spaces for indentation. Line length limit: 88 characters (Black/Ruff default). Use Ruff for automatic formatting.
+- **Type Hints**: Use type hints for function parameters and return types (e.g., `def func(x: int) -> str:`). For complex types, import from `typing` (e.g., `List`, `Optional`).
+- **Naming Conventions**:
+  - Variables and functions: `snake_case` (e.g., `load_current_timezone`).
+  - Constants: `UPPER_CASE` (e.g., `SYS_MIN = 70`).
+  - Classes: `CamelCase` (e.g., `DataHandler`).
+  - Private methods/attributes: Prefix with `_` (e.g., `_private_func`).
+- **Docstrings**: Use triple-quoted docstrings for modules, classes, and functions. Follow Google/NumPy style (e.g., describe parameters, returns, raises).
+- **Error Handling**: Catch specific exceptions (e.g., `ValueError`, `FileNotFoundError`). Use `try/except` blocks. Log errors with appropriate levels (e.g., `logging.error`). Avoid bare `except:` clauses.
+- **Async/Await**: Use `async def` for FastAPI routes and I/O operations. Await async calls properly.
+- **Comments**: Use inline comments for complex logic. Prefer self-documenting code. No unnecessary comments.
+- **Security**: Never hardcode secrets or keys. Use environment variables. Validate all user inputs to prevent injection. Sanitize data before processing.
+- **Performance**: Optimize for CPU-intensive tasks like chart generation. Use efficient data structures (e.g., lists over dicts where appropriate).
+- **File Handling**: Use context managers (`with open(...)`). For concurrent access, use file locking (`fcntl`).
+- **Testing**: Write unit tests for pure functions. Use assertions. Extend `test_logic.py` or add `pytest` for better test framework.
+- **Version Control**: Commit small, focused changes. Use descriptive commit messages (e.g., "Add timezone config saving").
+- **HTMX Integration**: Use HTMX for dynamic form submissions and partial updates. Ensure forms include `hx-post` and appropriate triggers. Handle responses gracefully to update the UI without full page reloads.
+- **FastAPI Best Practices**: Use dependency injection where appropriate. Return appropriate HTTP status codes. Use Pydantic models for request/response validation.
+- **Matplotlib Usage**: Generate charts server-side and cache where possible. Use `io.BytesIO` for in-memory image handling. Avoid rendering charts on every request if not necessary.
