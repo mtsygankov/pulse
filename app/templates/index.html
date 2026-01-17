@@ -26,17 +26,17 @@
           <input type="checkbox" name="show_pulse" value="true" class="toggle-checkbox" />
           <span>Show Pulse on Chart</span>
         </label>
-        <div class="mt-2">
-          <label class="block text-sm font-semibold mb-1">Local Timezone:</label>
-          <label class="flex items-center gap-2">
-            <input type="radio" name="local_tz" value="Asia/Shanghai" class="tz-radio" />
-            <span>Shanghai (UTC+8)</span>
-          </label>
-          <label class="flex items-center gap-2">
-            <input type="radio" name="local_tz" value="Europe/Moscow" class="tz-radio" />
-            <span>Moscow (UTC+3)</span>
-          </label>
-        </div>
+         <div class="mt-2">
+           <label class="block text-sm font-semibold mb-1">Local Timezone:</label>
+           <label class="flex items-center gap-2">
+             <input type="radio" name="local_tz" value="Asia/Shanghai" class="tz-radio" hx-post="/set_timezone" hx-trigger="change" hx-vals="js:{local_tz: this.value}" />
+             <span>Shanghai (UTC+8)</span>
+           </label>
+           <label class="flex items-center gap-2">
+             <input type="radio" name="local_tz" value="Europe/Moscow" class="tz-radio" hx-post="/set_timezone" hx-trigger="change" hx-vals="js:{local_tz: this.value}" />
+             <span>Moscow (UTC+3)</span>
+           </label>
+         </div>
       </form>
     </div>
     
@@ -61,7 +61,7 @@
       let showPulse = true;
       let meOnly = false;
       let nightShadows = false;
-      let localTz = 'Asia/Shanghai';
+       let localTz = '{{ current_timezone }}';
       try {
         const sp = localStorage.getItem('showPulse');
         showPulse = sp === null ? true : JSON.parse(sp);
@@ -75,13 +75,15 @@
         nightShadows = ns === null ? false : JSON.parse(ns);
       } catch (e) {}
       try {
-        const tz = localStorage.getItem('local_tz');
-        localTz = tz || 'Asia/Shanghai';
+        localTz = '{{ current_timezone }}';
       } catch (e) {}
 
-      // Set hidden input to current timezone
-      const localTzInput = document.getElementById('local_tz_input');
-      if (localTzInput) localTzInput.value = localTz;
+       // Set localStorage to server timezone to inherit it
+       localStorage.setItem('local_tz', localTz);
+
+       // Set hidden input to current timezone
+       const localTzInput = document.getElementById('local_tz_input');
+       if (localTzInput) localTzInput.value = localTz;
 
       renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly), nightShadows: Boolean(nightShadows) })
         .catch(err => console.error('Initial renderBPChart error:', err));
@@ -142,7 +144,7 @@
     const filterState = localStorage.getItem('filter_me_only');
     const nightShadowsState = localStorage.getItem('night_shadows');
     const showPulseState = localStorage.getItem('showPulse');
-    const localTzState = localStorage.getItem('local_tz') || 'Asia/Shanghai';
+     const localTzState = '{{ current_timezone }}';
 
     if (filterState !== null) {
       filterCheckbox.checked = JSON.parse(filterState);

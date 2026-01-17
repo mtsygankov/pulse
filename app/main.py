@@ -14,6 +14,24 @@ from typing import List
 
 import matplotlib
 
+
+def load_current_timezone():
+    if not os.path.exists(CONFIG_FILE):
+        return "Asia/Shanghai"
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            config = json.load(f)
+        return config.get("current_timezone", "Asia/Shanghai")
+    except Exception:
+        return "Asia/Shanghai"
+
+
+def save_current_timezone(tz_name):
+    config = {"current_timezone": tz_name}
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2)
+
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -23,6 +41,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(os.path.dirname(BASE_DIR), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 DATA_FILE = os.path.join(DATA_DIR, "bp.ndjson")
+CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
 
 SYS_MIN, SYS_MAX = 70, 250
 DIA_MIN, DIA_MAX = 40, 150
@@ -55,7 +74,7 @@ def ensure_data_file():
 def now_local_iso(tz_name: str):
     """Generate ISO timestamp in the specified local timezone with explicit offset."""
     tz = ZoneInfo(tz_name)
-    return datetime.datetime.now(tz).isoformat(timespec='seconds')
+    return datetime.datetime.now(tz).isoformat(timespec="seconds")
 
 
 def now_utc_iso():
@@ -65,8 +84,8 @@ def now_utc_iso():
 def parse_iso(s: str) -> datetime.datetime:
     """Parse ISO timestamp with explicit offset (handles +08:00, +03:00, etc.)."""
     # Handle legacy 'Z' suffix if any remain
-    if s.endswith('Z'):
-        s = s.replace('Z', '+00:00')
+    if s.endswith("Z"):
+        s = s.replace("Z", "+00:00")
     return datetime.datetime.fromisoformat(s)
 
 
@@ -329,6 +348,7 @@ def index(request: Request, status_msg: str | None = None):
     entries = read_all()
     grouped_data = group_measurements_by_date(entries)
     cache_bust = int(time.time())
+    current_timezone = load_current_timezone()
     return templates.TemplateResponse(
         "index.html",
         {
@@ -337,6 +357,7 @@ def index(request: Request, status_msg: str | None = None):
             "status_msg": status_msg,
             "cache_bust": cache_bust,
             "grouped_data": grouped_data,
+            "current_timezone": current_timezone,
         },
     )
 
@@ -384,13 +405,15 @@ def add(
             "t": now_local_iso(tz_name),
             "sys": sys_v,
             "dia": dia_v,
-            "pulse": pul_v
+            "pulse": pul_v,
         }
         if line:
             entry["raw"] = line
         else:
-            entry["raw"] = f"sys_bp={sys_v} dia_bp={dia_v} pulse={pul_v}"
+            entry["raw"] = f"sys_bp={sys_v} dia_bp={dia_bp} pulse={pul_v}"
         append_entry(entry)
+        # Save the current timezone
+        save_current_timezone(tz_name)
         status_msg = "Saved"
     except ValueError as e:
         status_msg = f"Error: {e}"
@@ -430,7 +453,9 @@ def chart_combined(
         ]
     else:
         filtered_entries = entries
-    buf = plot_pressure( filtered_entries, night_shadows=night_shadows, show_pulse=show_pulse )
+    buf = plot_pressure(
+        filtered_entries, night_shadows=night_shadows, show_pulse=show_pulse
+    )
     return StreamingResponse(buf, media_type="image/png")
 
 
@@ -446,6 +471,12 @@ def update_chart(
     show_pulse_param = f"&show_pulse={str(show_pulse).lower()}"
     html_content = f'<div id="charts" class="flex flex-col gap-3"><img class="w-full h-auto" alt="Blood Pressure and Pulse" src="/chart/combined.png?cb={cache_bust}{filter_param}{night_shadows_param}{show_pulse_param}" /></div>'
     return HTMLResponse(content=html_content)
+
+
+@app.post("/set_timezone")
+def set_timezone(local_tz: str = Form(...)):
+    save_current_timezone(local_tz)
+    return {"status": "ok"}
 
 
 @app.get("/json")
