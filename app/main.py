@@ -49,23 +49,23 @@ def save_current_timezone(tz_name):
             config = json.load(f)
     except Exception:
         config = {}
-    
+
     # Update current timezone while preserving other settings
     config["current_timezone"] = tz_name
-    
+
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
 
 
 def get_timezone_info(tz_name: str) -> dict:
     """Get timezone display information including city name and badge color."""
-    logging.info(f"DEBUG: get_timezone_info called with {tz_name}")
+
     # Load timezone mappings from config
     try:
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             config = json.load(f)
         tz_mapping = config.get("timezones", {})
-        logging.info(f"DEBUG: loaded tz_mapping: {tz_mapping}")
+
         # Fallback to hardcoded defaults if config is missing timezones
         if not tz_mapping:
             tz_mapping = {
@@ -81,7 +81,6 @@ def get_timezone_info(tz_name: str) -> dict:
                 },
             }
     except Exception as e:
-        logging.info(f"DEBUG: Exception loading config: {e}")
         # Fallback to hardcoded defaults if config loading fails
         tz_mapping = {
             "Asia/Shanghai": {
@@ -96,12 +95,18 @@ def get_timezone_info(tz_name: str) -> dict:
             },
         }
 
-    result = tz_mapping.get(tz_name, tz_mapping.get("Asia/Shanghai", {
-        "city": "Shanghai",
-        "badge_class": "tz-badge--shanghai",
-        "utc_offset": "UTC+8",
-    }))
-    logging.info(f"DEBUG: returning timezone_info: {result}")
+    result = tz_mapping.get(
+        tz_name,
+        tz_mapping.get(
+            "Asia/Shanghai",
+            {
+                "city": "Shanghai",
+                "badge_class": "tz-badge--shanghai",
+                "utc_offset": "UTC+8",
+            },
+        ),
+    )
+
     return result
 
 
@@ -414,14 +419,13 @@ def plot_pressure(entries, night_shadows=None, show_pulse=True):
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, status_msg: str | None = None):
-    logging.info("DEBUG: Index route called")
     entries = read_all()
     grouped_data = group_measurements_by_date(entries)
     cache_bust = int(time.time())
     current_timezone = load_current_timezone()
-    logging.info(f"DEBUG: current_timezone loaded: {current_timezone}")
+
     timezone_info = get_timezone_info(current_timezone)
-    logging.info(f"DEBUG: timezone_info for index: {timezone_info}")
+
     return templates.TemplateResponse(
         "index.html",
         {
@@ -566,14 +570,14 @@ def get_timezones():
                 "Asia/Shanghai": {
                     "city": "Shanghai",
                     "badge_class": "tz-badge--shanghai",
-                    "utc_offset": "UTC+8"
+                    "utc_offset": "UTC+8",
                 },
                 "Europe/Moscow": {
                     "city": "Moscow",
                     "badge_class": "tz-badge--moscow",
-                    "utc_offset": "UTC+3"
-                }
-            }
+                    "utc_offset": "UTC+3",
+                },
+            },
         }
 
 

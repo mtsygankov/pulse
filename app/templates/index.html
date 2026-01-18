@@ -56,7 +56,7 @@
 
     <div id="bp-chart" style="height:520px;"></div>
   <script>
-    console.log('DEBUG: template variables - current_timezone: {{ current_timezone }}, timezone_info: {{ timezone_info | tojson }}');
+
     (function() {
       // Read persisted settings and call renderBPChart with matching options
       let showPulse = true;
@@ -84,7 +84,7 @@
        if (localTzInput) localTzInput.value = localTz;
 
       renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly), nightShadows: Boolean(nightShadows) })
-        .catch(err => console.error('Initial renderBPChart error:', err));
+        .catch(err => {});
     })();
   </script>
 
@@ -270,9 +270,9 @@
       const meOnly = filterState === null ? false : JSON.parse(filterState);
       const nightShadows = nightShadowsState === null ? false : JSON.parse(nightShadowsState);
       renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly), nightShadows: Boolean(nightShadows) })
-        .catch(e => console.error('renderBPChart error:', e));
+        .catch(e => {});
     } catch (e) {
-      console.error('Error rendering chart on loadSettings:', e);
+
     }
   }
 
@@ -322,9 +322,9 @@
         togglePulseColumns(spCheckbox ? spCheckbox.checked : showPulse);
         // Re-render the interactive chart with current settings
         renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly), nightShadows: Boolean(nightShadows) })
-          .catch(err => console.error('renderBPChart error:', err));
+          .catch(err => {});
       } catch (e) {
-        console.error('Error applying settings change:', e);
+
       }
     });
   });
@@ -358,7 +358,7 @@
         const meOnly = JSON.parse(localStorage.getItem('filter_me_only') || 'false');
         const nightShadows = JSON.parse(localStorage.getItem('night_shadows') || 'false');
         renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly), nightShadows: Boolean(nightShadows) })
-          .catch(err => console.error('renderBPChart error:', err));
+          .catch(err => {});
       }
       // Update timezone badge when page content is swapped
       if (target && target.id === 'page') {
@@ -366,14 +366,11 @@
         updateTimezoneBadge(localTz);
       }
     } catch (e) {
-      console.error('htmx afterSwap handler error', e);
+
     }
   });
 
-  console.log('DEBUG: tz-badge element: ', document.getElementById('tz-badge'));
-  console.log('DEBUG: tz-badge class: ', document.getElementById('tz-badge')?.className);
-  console.log('DEBUG: tz-badge text: ', document.getElementById('tz-badge')?.textContent);
-  console.log('DEBUG: tz-badge background: ', getComputedStyle(document.getElementById('tz-badge'))?.backgroundColor);
+
 </script>
 {% endblock %}
 
