@@ -67,7 +67,7 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
     return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + dayOffset, 12, 0, 0, 0);
   }
 
-  // Compute highlighted timestamps (first morning 07:00-11:59 and first evening >=21:00 per local date)
+  // Compute highlighted timestamps (first morning 07:00-13:00 and first evening in 6-hour window 21:00-03:00 next day per local date)
   function computeHighlightedTimestamps(rows) {
     const grouped = new Map();
     for (const r of rows) {
@@ -84,17 +84,43 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
     for (const [date, arr] of grouped.entries()) {
       // sort by original timestamp to pick first occurrences
       arr.sort((a, b) => a.row.x - b.row.x);
+
+      // Morning: 7:00-13:00
       for (const item of arr) {
-        if (item.hour >= 7 && item.hour < 12) {
+        if (item.hour >= 7 && item.hour < 13) {
           morning.add(item.row.iso);
           break;
         }
       }
+
+      // Evening: 21:00-03:00 next day
+      const eveningCandidates = [];
       for (const item of arr) {
         if (item.hour >= 21) {
-          evening.add(item.row.iso);
-          break;
+          eveningCandidates.push(item);
         }
+      }
+
+      // Look at next day for early measurements (0, 1, 2 hours)
+      const currentYear = parseInt(date.slice(0, 4));
+      const currentMonth = parseInt(date.slice(5, 7)) - 1;
+      const currentDay = parseInt(date.slice(8, 10));
+      const nextDate = new Date(Date.UTC(currentYear, currentMonth, currentDay + 1));
+      const nextDateStr = `${String(nextDate.getUTCFullYear()).padStart(4,'0')}-${String(nextDate.getUTCMonth()+1).padStart(2,'0')}-${String(nextDate.getUTCDate()).padStart(2,'0')}`;
+
+      if (grouped.has(nextDateStr)) {
+        const nextDayArr = grouped.get(nextDateStr);
+        for (const item of nextDayArr) {
+          if (item.hour < 3) {
+            eveningCandidates.push(item);
+            break;
+          }
+        }
+      }
+
+      if (eveningCandidates.length > 0) {
+        eveningCandidates.sort((a, b) => a.row.x - b.row.x);
+        evening.add(eveningCandidates[0].row.iso);
       }
     }
     return { morning, evening };
