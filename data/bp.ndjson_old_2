@@ -152,27 +152,3 @@
 {"local_tz": "Europe/Moscow", "t": "2026-01-15T21:58:01+03", "sys": 126, "dia": 90, "pulse": 79, "raw": "128 88 80 124 93 78"}
 {"local_tz": "Europe/Moscow", "t": "2026-01-16T08:59:15+03:00", "sys": 118, "dia": 91, "pulse": 62, "raw": "128 91 63 118 92 61 117 89 62"}
 {"local_tz": "Europe/Moscow", "t": "2026-01-17T09:16:26+03:00", "sys": 120, "dia": 83, "pulse": 70, "raw": "123 82 69 118 84 70"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-18T09:27:43+03:00", "sys": 130, "dia": 88, "pulse": 64, "raw": "131 87 57 130 89 70"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-18T23:42:11+03:00", "sys": 121, "dia": 86, "pulse": 76, "raw": "121 86 76"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-19T09:04:48+03:00", "sys": 117, "dia": 79, "pulse": 74, "raw": "117 79 79 119 80 72 116 77 74 "}
-{"local_tz": "Europe/Moscow", "t": "2026-01-19T23:10:16+03:00", "sys": 118, "dia": 84, "pulse": 72, "raw": "119 84 74 116 83 69"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-20T08:31:25+03:00", "sys": 131, "dia": 86, "pulse": 70, "raw": "131 86 74 131 83 68 134 89 70 "}
-{"local_tz": "Europe/Moscow", "t": "2026-01-20T23:18:27+03:00", "sys": 120, "dia": 76, "pulse": 65, "raw": "120 80 63 122 76 65 109 74 69"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-21T08:52:03+03:00", "sys": 133, "dia": 88, "pulse": 74, "raw": "130 88 74 136 88 73"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-21T23:07:02+03:00", "sys": 106, "dia": 70, "pulse": 90, "raw": "107 69 89 105 71 92"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-22T09:21:30+03:00", "sys": 128, "dia": 88, "pulse": 72, "raw": "127 88 71 129 89 74"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-22T23:59:17+03:00", "sys": 106, "dia": 70, "pulse": 76, "raw": "106 70 76"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-23T08:55:55+03:00", "sys": 124, "dia": 88, "pulse": 82, "raw": "124 87 82 123 88 81"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-23T23:59:31+03:00", "sys": 110, "dia": 75, "pulse": 70, "raw": "111 76 69 109 74 72"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-24T11:59:24+03:00", "sys": 132, "dia": 94, "pulse": 63, "raw": "132 91 83 131 95 63 136 94 63"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-24T23:08:48+03:00", "sys": 117, "dia": 76, "pulse": 90, "raw": "117 76 90 110 76 90 117 78 88"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-25T11:59:58+03:00", "sys": 133, "dia": 94, "pulse": 74, "raw": "135 93 75 131 94 74"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-25T22:24:37+03:00", "sys": 108, "dia": 78, "pulse": 81, "raw": "110 82 80 105 74 82"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-26T07:52:31+03:00", "sys": 119, "dia": 81, "pulse": 64, "raw": "120 83 67 118 79 62"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-27T08:10:42+03:00", "sys": 110, "dia": 82, "pulse": 81, "raw": "104 82 98 116 82 81 110 78 77 "}
-{"local_tz": "Europe/Moscow", "t": "2026-01-27T23:59:41+03:00", "sys": 102, "dia": 68, "pulse": 70, "raw": "107 71 73 97 65 66"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-28T08:50:00+03:00", "sys": 97, "dia": 70, "pulse": 76, "raw": "101 71 79 93 69 74"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-28T23:21:43+03:00", "sys": 92, "dia": 66, "pulse": 92, "raw": "92 68 94 91 64 91"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-29T10:42:36+03:00", "sys": 106, "dia": 76, "pulse": 75, "raw": "103 77 77 108 75 73"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-29T23:59:26+03:00", "sys": 100, "dia": 74, "pulse": 76, "raw": "102 75 77 99 72 75"}
-{"local_tz": "Europe/Moscow", "t": "2026-01-30T10:58:30+03:00", "sys": 101, "dia": 71, "pulse": 78, "raw": "100 70 80 102 72 77"}

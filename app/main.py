@@ -196,10 +196,28 @@ def group_measurements_by_date(entries):
         measurements = grouped[date]
         # Sort by time
         measurements.sort(key=lambda x: x[0])
-        morning_measurements = [m for m in measurements if 7 <= m[0].hour < 12]
-        evening_measurements = [m for m in measurements if m[0].hour >= 21]
+        # Morning: 7:00-13:00 (inclusive of 7:00, exclusive of 13:00)
+        morning_measurements = [m for m in measurements if 7 <= m[0].hour < 13]
+
+        # Evening: 21:00-03:00 next day
+        # Get measurements on current date with hour >= 21
+        evening_same_day = [m for m in measurements if m[0].hour >= 21]
+
+        # Get measurements on next day with hour < 3
+        next_date_obj = datetime.datetime.strptime(
+            date, "%Y-%m-%d"
+        ) + datetime.timedelta(days=1)
+        next_date = next_date_obj.date().isoformat()
+        evening_next_day = [
+            (dt, entry) for dt, entry in grouped.get(next_date, []) if dt.hour < 3
+        ]
+
+        # Combine and pick earliest chronologically
+        evening_candidates = evening_same_day + evening_next_day
+        evening_candidates.sort(key=lambda x: x[0])
+        evening = evening_candidates[0][1] if evening_candidates else None
+
         morning = morning_measurements[0][1] if morning_measurements else None
-        evening = evening_measurements[0][1] if evening_measurements else None
         result.append({"date": date, "morning": morning, "evening": evening})
     return result
 
