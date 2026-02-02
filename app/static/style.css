@@ -1,61 +1,276 @@
 :root { color-scheme: light dark; }
 
-#settings-toggle {
-  background: #3b82f6 !important;
-  color: white !important;
+/* Compact header container */
+.compact-header {
   display: flex;
-  justify-content: center;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Icon toggle buttons */
+.icon-btn {
   width: 40px;
   height: 40px;
-  line-height: 40px;
-  border: none;
-  cursor: pointer;
-  font-size: 2rem;
-}
-
-#settings-toggle:hover {
-  background: #2563eb !important;
-}
-
-.toggle-checkbox {
-  appearance: none;
-  width: 40px;
-  height: 20px;
-  background: #ccc;
-  border-radius: 10px;
-  position: relative;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.toggle-checkbox:checked {
-  background: #3b82f6;
-}
-
-.toggle-checkbox:before {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
   background: white;
-  border-radius: 50%;
-  top: 2px;
-  left: 2px;
-  transition: left 0.3s;
-}
-
-.toggle-checkbox:checked:before {
-  left: 22px;
-}
-
-/* Timezone badge flexbox styles */
-.input-flex-wrapper {
+  cursor: pointer;
   display: flex;
   align-items: center;
-  flex: 1;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
 }
 
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: #9ca3af;
+  fill: none;
+  stroke-width: 2;
+}
+
+.icon-btn:hover {
+  border-color: #9ca3af;
+}
+
+.icon-btn.active {
+  border-color: transparent;
+}
+
+/* Active state colors */
+.icon-btn.active svg {
+  stroke: currentColor;
+}
+
+.icon-btn#btn-filter.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.icon-btn#btn-night.active {
+  background: #f59e0b;
+  color: white;
+}
+
+.icon-btn#btn-pulse.active {
+  background: #ef4444;
+  color: white;
+}
+
+/* Compact input field */
+.input-compact {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: white;
+  color: #1f2937;
+}
+
+.input-compact:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Save button */
+.btn-save {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.btn-save:hover {
+  background: #2563eb;
+}
+
+.btn-save:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Timezone modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 300px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.modal-header button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.modal-header button:hover {
+  background: #f3f4f6;
+}
+
+/* Mobile responsive */
+@media (max-width: 767px) {
+  .header-row-1 {
+    flex-wrap: wrap;
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .icon-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .app-title-mobile {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-left: auto;
+  }
+
+  .input-compact {
+    min-width: 120px;
+  }
+}
+
+/* Force two-line title on screens < 750px */
+@media (max-width: 749px) {
+  .app-title-mobile {
+    max-width: 140px;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Desktop: show title, right-aligned */
+@media (min-width: 768px) {
+  .compact-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .header-row-1,
+  .header-row-2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0;
+  }
+
+  .app-title-mobile {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-left: auto;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .icon-btn {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .icon-btn:hover {
+    border-color: #6b7280;
+  }
+
+  .input-compact {
+    background: #1f2937;
+    border-color: #4b5563;
+    color: #f3f4f6;
+  }
+
+  .input-compact:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+
+  .modal-content {
+    background: #1f2937;
+  }
+
+  .modal-header h3 {
+    color: #f3f4f6;
+  }
+
+  .modal-header button {
+    color: #9ca3af;
+  }
+
+  .modal-header button:hover {
+    background: #374151;
+  }
+
+  .tz-option {
+    color: #f3f4f6;
+  }
+
+  .tz-option .text-gray-500 {
+    color: #9ca3af;
+  }
+
+  .app-title-mobile {
+    color: #f3f4f6;
+  }
+}
+
+/* Timezone badge styles (reused for clickable pill) */
 .tz-badge {
   flex-shrink: 0;
   margin-right: 16px;
@@ -67,11 +282,14 @@
   white-space: nowrap;
   line-height: 1;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
 }
 
-.input-with-border {
-  flex: 1;
-  min-width: 0; /* Allow input to shrink in flex container */
+.tz-badge:hover {
+  opacity: 0.9;
 }
 
 .tz-badge--shanghai {
@@ -92,54 +310,6 @@
 
 .tz-badge--tokyo {
   background-color: #f59e0b;
-}
-
-/* Timezone dropdown styles */
-.tz-dropdown {
-  min-width: 180px;
-  padding: 6px 10px;
-  font-size: 0.875rem;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background-color: white;
-  cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.tz-dropdown:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.tz-badge:hover {
-  opacity: 0.9;
-  cursor: pointer;
-}
-
-/* Mobile responsiveness for settings panel */
-@media (max-width: 480px) {
-  #settings-panel {
-    padding: 0.5rem;
-  }
-
-  #settings-panel label {
-    font-size: 0.9rem;
-  }
-
-  #settings-panel label span {
-    white-space: nowrap;
-  }
-
-  .toggle-checkbox {
-    flex-shrink: 0;
-  }
-
-  .tz-badge {
-    font-size: 1rem;
-    padding: 8px 12px;
-    margin-right: 12px;
-  }
 }
 
 /* Dark mode styles */
@@ -187,58 +357,22 @@
     background-color: #4b5563 !important;
     color: #f3f4f6 !important;
   }
-  
+
   .bg-gray-200:hover {
     background-color: #6b7280 !important;
   }
-  
-  /* Timezone dropdown */
-  .tz-dropdown {
-    background-color: #374151 !important;
-    color: #f3f4f6 !important;
-    border-color: #4b5563 !important;
-  }
-  
-  .tz-dropdown:focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
-  }
-  
-  /* Input fields */
-  .input-with-border {
-    background-color: #1f2937 !important;
-    color: #f3f4f6 !important;
-    border-color: #4b5563 !important;
-  }
-  
-  .input-with-border:focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
-  }
-  
+
   /* Form input styling */
-  input[type="text"], 
+  input[type="text"],
   input[type="number"] {
     background-color: #374151 !important;
     color: #f3f4f6 !important;
     border-color: #4b5563 !important;
   }
-  
-  input[type="text"]:focus, 
+
+  input[type="text"]:focus,
   input[type="number"]:focus {
     border-color: #3b82f6 !important;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
-  }
-  
-  /* Settings panel */
-  #settings-panel {
-    background-color: #1f2937 !important;
-    border-color: #4b5563 !important;
-  }
-  
-  /* Status message styling */
-  .bg-yellow-50 {
-    background-color: #78350f !important;
-    color: #fef3c7 !important;
   }
 }
