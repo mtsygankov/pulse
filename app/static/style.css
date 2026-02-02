@@ -2,10 +2,9 @@
 
 /* Compact header container */
 .compact-header {
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 8px;
-  flex-wrap: wrap;
+  align-items: center;
 }
 
 /* Icon toggle buttons */
@@ -154,69 +153,85 @@
   background: #f3f4f6;
 }
 
-/* Mobile responsive */
-@media (max-width: 767px) {
-  .header-row-1 {
-    flex-wrap: wrap;
+/* Mobile: 2 rows */
+@media (max-width: 749px) {
+  .compact-header {
+    grid-template-columns: auto auto auto 1fr;
+    grid-template-rows: auto auto;
   }
 
-  .icon-btn {
-    width: 36px;
-    height: 36px;
+  /* Make rows transparent to grid */
+  .header-row-1,
+  .header-row-2 {
+    display: contents;
   }
 
-  .icon-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-
+  /* Position elements in grid */
+  #btn-filter { grid-column: 1; grid-row: 1; }
+  #btn-night { grid-column: 2; grid-row: 1; }
+  #btn-pulse { grid-column: 3; grid-row: 1; }
   .app-title-mobile {
-    display: block;
-    font-size: 1rem;
+    grid-column: 4; grid-row: 1;
+    white-space: nowrap; /* Single line */
+    font-size: 2rem;
     font-weight: 600;
     color: #1f2937;
-    margin-left: auto;
+    text-align: right; /* Align to right edge of grid cell */
+  }
+
+  /* Form spans full width in row 2 */
+  #entry-form {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
   }
 
   .input-compact {
-    min-width: 120px;
+    flex: 1; /* Take remaining space */
+  }
+
+  .btn-save {
+    margin-left: auto; /* Push to right edge of container */
   }
 }
 
-/* Force two-line title on screens < 750px */
-@media (max-width: 749px) {
-  .app-title-mobile {
-    max-width: 140px;
-    white-space: normal;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-}
-
-/* Desktop: show title, right-aligned */
-@media (min-width: 768px) {
+/* Desktop: 1 row */
+@media (min-width: 750px) {
   .compact-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: nowrap;
+    grid-template-columns: auto auto auto auto 1fr auto;
+    grid-template-rows: auto;
   }
 
+  /* Make rows transparent to grid */
   .header-row-1,
   .header-row-2 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 0;
+    display: contents;
   }
 
+  /* Position elements in single row */
+  #btn-filter { grid-column: 1; grid-row: 1; }
+  #btn-night { grid-column: 2; grid-row: 1; }
+  #btn-pulse { grid-column: 3; grid-row: 1; }
+
+  /* Hide title on desktop */
   .app-title-mobile {
-    display: block;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-left: auto;
+    display: none;
   }
+
+  /* Form elements in grid */
+  #entry-form {
+    display: contents; /* Let children participate in grid */
+  }
+
+  #tz-pill { grid-column: 4; grid-row: 1; }
+  .input-compact {
+    grid-column: 5; grid-row: 1;
+    width: 100%;
+  }
+  .btn-save { grid-column: 6; grid-row: 1; }
 }
 
 /* Dark mode adjustments */
