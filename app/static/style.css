@@ -49,7 +49,7 @@
 }
 
 .icon-btn#btn-night.active {
-  background: #f59e0b;
+  background: #4b5563;
   color: white;
 }
 
@@ -289,7 +289,7 @@
 .tz-badge {
   flex-shrink: 0;
   margin-right: 16px;
-  padding: 4px 12px;
+  padding: 5px 12px;
   border-radius: 1rem;
   font-size: 1rem;
   font-weight: 600;
