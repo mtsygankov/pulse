@@ -109,6 +109,18 @@ Settings are automatically saved to local storage and restored on page reload, p
 - `GET /json`: Raw measurements as JSON
 - `GET /dump`: Raw NDJSON data
 
+## UI Customization
+
+The header UI elements (timezone pill, icon buttons, input field, and save button) use a unified shadow style controlled by a CSS custom property. To customize the shadow effect, modify the `--header-shadow` variable in `app/static/style.css`:
+
+```css
+:root {
+  --header-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+```
+
+This single change affects all header elements simultaneously, making it easy to adjust the visual depth of the interface.
+
 ## Data Format
 
 Measurements stored as NDJSON:

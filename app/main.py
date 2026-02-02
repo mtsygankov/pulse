@@ -80,7 +80,7 @@ def get_timezone_info(tz_name: str) -> dict:
                     "utc_offset": "UTC+3",
                 },
             }
-    except Exception as e:
+    except Exception:
         # Fallback to hardcoded defaults if config loading fails
         tz_mapping = {
             "Asia/Shanghai": {
