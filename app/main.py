@@ -199,9 +199,9 @@ def group_measurements_by_date(entries):
         # Morning: 7:00-13:00 (inclusive of 7:00, exclusive of 13:00)
         morning_measurements = [m for m in measurements if 7 <= m[0].hour < 13]
 
-        # Evening: 21:00-03:00 next day
-        # Get measurements on current date with hour >= 21
-        evening_same_day = [m for m in measurements if m[0].hour >= 21]
+        # Evening: 19:00-03:00 next day
+        # Get measurements on current date with hour >= 19
+        evening_same_day = [m for m in measurements if m[0].hour >= 19]
 
         # Get measurements on next day with hour < 3
         next_date_obj = datetime.datetime.strptime(

@@ -6,7 +6,7 @@ Pulse is a Progressive Web App (PWA) built with FastAPI for tracking and visuali
 ## Purpose
 The primary purpose of Pulse is to facilitate personal health monitoring by:
 - Recording BP measurements with ISO timestamps and timezone metadata.
-- Grouping measurements by date, highlighting morning (07:00-13:00) and evening (21:00-03:00 next day) readings.
+- Grouping measurements by date, highlighting morning (07:00-13:00) and evening (19:00-03:00 next day) readings.
 - Visualizing BP data via interactive client-side ECharts with zoom/pan capabilities, displaying SYS/DIA ranges and pulse.
 - Providing editable interface for recent measurements with automatic backups.
 - Supporting multi-timezone tracking for users traveling across different time zones.
@@ -142,8 +142,8 @@ Measurements are stored as NDJSON with the following fields:
 #### Grouping Logic
 - **Morning**: Measurements taken between 07:00-13:00 (inclusive of 07:00, exclusive of 13:00)
   - Selects earliest measurement in this window per date
-- **Evening**: Measurements taken between 21:00-03:00 next day (6-hour window)
-  - Checks current date for 21:00-24:00
+- **Evening**: Measurements taken between 19:00-03:00 next day (8-hour window)
+  - Checks current date for 19:00-24:00
   - Checks next date for 00:00-03:00
   - Selects earliest chronologically from both groups
 - Implementation in `group_measurements_by_date()` function in `app/main.py`
@@ -277,7 +277,7 @@ python test_grouping.py
 - Morning/evening grouping with edge cases (midnight, boundary hours)
 - Multi-timezone handling (Shanghai UTC+8, Moscow UTC+3)
 - Verification of earliest measurement selection in time windows
-- Border conditions (03:00, 13:00, 21:00)
+- Border conditions (03:00, 13:00, 19:00)
 
 Add integration tests for API endpoints if using pytest.
 
@@ -470,7 +470,7 @@ Add new timezone badge classes following the `tz-badge--cityname` pattern.
 
 Client-side chart supports the following options via UI toggles:
 - **Show Pulse on Chart**: Toggle red pulse line visibility (default: enabled)
-- **Plot Only Morning/Evening**: Filter to show only highlighted measurements (morning 07:00-13:00, evening 21:00-03:00)
+- **Plot Only Morning/Evening**: Filter to show only highlighted measurements (morning 07:00-13:00, evening 19:00-03:00)
 - **Night Shadows**: Add shaded regions for nighttime hours (18:00-24:00 and 00:00-06:00)
 
 All settings are automatically saved to browser local storage and restored on page reload.
