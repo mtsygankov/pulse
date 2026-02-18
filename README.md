@@ -13,7 +13,7 @@ The app now supports PWA installation with:
 ## Features
 
 - Record systolic/diastolic blood pressure and pulse readings with timestamps
-- Automatic grouping of measurements by date (morning 07:00-12:00, evening after 21:00)
+- Automatic grouping of measurements by date (morning 07:00-13:00, evening 19:00-03:00)
 - Interactive matplotlib charts showing BP trends with color-coded morning/evening highlights
 - Chart customization options including pulse display toggle, measurement filtering, and night shadows
 - Settings persistence using browser local storage
@@ -26,7 +26,7 @@ The app now supports PWA installation with:
 The application provides a settings panel accessible via the hamburger menu button (☰) in the top-left corner of the interface. This panel allows users to customize the chart display:
 
 - **Show Pulse on Chart**: Toggle the visibility of the pulse line on the blood pressure chart. When enabled, the chart displays a red pulse line alongside the BP bars. This setting is persisted in the browser's local storage and defaults to enabled.
-- **Plot only morning/evening measurements**: Filter the chart to show only measurements taken during morning (07:00-12:00) or evening (after 21:00) hours.
+- **Plot only morning/evening measurements**: Filter the chart to show only measurements taken during morning (07:00-13:00) or evening (19:00-03:00) hours.
 - **Night shadows**: Add shaded regions to the chart indicating nighttime hours (18:00-24:00 and 00:00-06:00).
 
 Settings are automatically saved to local storage and restored on page reload, providing a consistent user experience.
@@ -103,7 +103,7 @@ Settings are automatically saved to local storage and restored on page reload, p
 - `POST /add`: Add new measurement
 - `GET /chart/combined.png`: BP trend chart
   - Query parameters:
-    - `filter=me_only`: Show only morning (07:00-12:00) and evening (after 21:00) measurements
+    - `filter=me_only`: Show only morning (07:00-13:00) and evening (19:00-03:00) measurements
     - `night_shadows=true`: Add night shading to the chart (18:00-24:00 and 00:00-06:00)
     - `show_pulse=true/false`: Toggle pulse line visibility on the chart (default: true)
 - `GET /json`: Raw measurements as JSON
