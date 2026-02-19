@@ -6,7 +6,7 @@ USA_USER ?= ubuntu
 UK_USER ?= ubuntu
 DATA_DUMP_URL ?= http://35.166.88.10:1971/dump
 
-.PHONY: build build-prod watch clean help deploy_usa deploy_uk data-download
+.PHONY: build build-prod watch clean help deploy_usa deploy_uk data-download dev
 
 # Build Tailwind CSS (one-time)
 build:
@@ -67,6 +67,9 @@ data-download:
 	fi; \
 	mv "$$tmp_file" "$$data_file"
 
+dev:
+	uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
+
 # Help
 help:
 	@echo "Available commands:"
@@ -77,4 +80,5 @@ help:
 	@echo "  make deploy_usa - Deploy to production server"
 	@echo "  make deploy_uk  - Deploy to production server"
 	@echo "  make data-download - Backup and download data from USA server"
+	@echo "  make dev        - Run the app locally on localhost:8002"
 	@echo "  make help       - Show this help message"
