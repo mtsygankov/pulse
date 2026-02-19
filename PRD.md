@@ -45,7 +45,8 @@ Pulse is a web-based application for tracking and visualizing blood pressure (BP
    - All data stored in the user's selected local timezone.
    - Timezone setting used ONLY when entering new measurements.
    - Timestamps stored as `TEXT` with offset (e.g., "+08:00") to preserve local clock time.
-   - Plotting uses stored local times directly without conversion.
+  - Plotting uses stored local times directly without conversion.
+  - `local_tz` is metadata only and must not be used for display or grouping.
 
 2. **Simplicity & Portability**
    - Static frontend (HTML/CSS/JavaScript) hosted on Netlify.
@@ -202,14 +203,14 @@ export const corsHeaders = {
 - **Local Timeline**: Plot measurements using the clock time in `t`, ignoring offsets.
 - **Night Shadows**: Grey overlays for 18:00–06:00 local time.
 - **Morning/Evening Highlighting**:
-  - **Morning**: First measurement in 07:00–15:00 window (Yellow).
-  - **Evening**: Last measurement in 19:00–03:00 (next day) window (Purple).
+  - **Morning**: First measurement in 07:00–13:00 window (Yellow).
+  - **Evening**: First measurement in 19:00–03:00 (next day) window (Blue).
 
 ### 4. Daily Summary Table
 
 **Grouping Logic:**
-- **Morning Slot**: First measurement in **07:00–15:00** window.
-- **Evening Slot**: Last measurement in **19:00–03:00 (next day)** window.
+- **Morning Slot**: First measurement in **07:00–13:00** window.
+- **Evening Slot**: First measurement in **19:00–03:00 (next day)** window.
 - **Date Attribution**: Measurements taken between **00:00 and 03:00** are attributed to the **previous calendar day**.
 
 ### 5. Edit Interface

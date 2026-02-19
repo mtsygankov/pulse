@@ -67,7 +67,7 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
     return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + dayOffset, 12, 0, 0, 0);
   }
 
-  // Compute highlighted timestamps (first morning 07:00-13:00 and first evening in 6-hour window 21:00-03:00 next day per local date)
+  // Compute highlighted timestamps (first morning 07:00-13:00 and first evening in 19:00-03:00 next day per local date)
   function computeHighlightedTimestamps(rows) {
     const grouped = new Map();
     for (const r of rows) {
@@ -93,10 +93,10 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
         }
       }
 
-      // Evening: 21:00-03:00 next day
+      // Evening: 19:00-03:00 next day
       const eveningCandidates = [];
       for (const item of arr) {
-        if (item.hour >= 21) {
+        if (item.hour >= 19) {
           eveningCandidates.push(item);
         }
       }

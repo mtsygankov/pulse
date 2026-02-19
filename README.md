@@ -14,10 +14,11 @@ The app now supports PWA installation with:
 
 - Record systolic/diastolic blood pressure and pulse readings with timestamps
 - Automatic grouping of measurements by date (morning 07:00-13:00, evening 19:00-03:00)
-- Interactive matplotlib charts showing BP trends with color-coded morning/evening highlights
+- Interactive charts showing BP trends with color-coded morning/evening highlights
 - Chart customization options including pulse display toggle, measurement filtering, and night shadows
 - Settings persistence using browser local storage
-- Timezone support (hardcoded to Asia/Shanghai UTC+8)
+- Local-clock charting: timestamps in `t` are plotted and grouped as-is (no timezone conversions)
+- `local_tz` is stored for metadata only and is not used for display or grouping
 - Simple web interface with HTMX for dynamic updates
 - Data validation and concurrent access safety
 
@@ -103,7 +104,7 @@ Settings are automatically saved to local storage and restored on page reload, p
 - `POST /add`: Add new measurement
 - `GET /chart/combined.png`: BP trend chart
   - Query parameters:
-    - `filter=me_only`: Show only morning (07:00-13:00) and evening (19:00-03:00) measurements
+   - `filter=me_only`: Show only morning (07:00-13:00) and evening (19:00-03:00) measurements
     - `night_shadows=true`: Add night shading to the chart (18:00-24:00 and 00:00-06:00)
     - `show_pulse=true/false`: Toggle pulse line visibility on the chart (default: true)
 - `GET /json`: Raw measurements as JSON
