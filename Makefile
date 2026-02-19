@@ -1,6 +1,6 @@
 # Makefile for Pulse Project Tailwind CSS
 
-.PHONY: build build-prod watch clean help deploy
+.PHONY: build build-prod watch clean help deploy_usa deploy_uk
 
 # Build Tailwind CSS (one-time)
 build:
@@ -26,8 +26,11 @@ clean:
 	@rm -f app/static/tailwind.min.css
 	@echo "✓ Cleaned"
 
-deploy:
+deploy_usa:
 	rsync --progress -avz --relative ./app/main.py ./app/config.json ./app/static/ ./app/templates/ ./icons/ ./*.toml ubuntu@35.166.88.10:~/pulse/
+
+deploy_uk:
+	rsync --progress -avz --relative ./app/main.py ./app/config.json ./app/static/ ./app/templates/ ./icons/ ./*.toml ubuntu@3.9.199.170:~/pulse/
 
 # Help
 help:
@@ -36,5 +39,6 @@ help:
 	@echo "  make watch      - Watch for changes and rebuild automatically"
 	@echo "  make build-prod - Build for production (same as build)"
 	@echo "  make clean      - Clean build artifacts"
-	@echo "  make deploy     - Deploy to production server"
+	@echo "  make deploy_usa - Deploy to production server"
+	@echo "  make deploy_uk  - Deploy to production server"
 	@echo "  make help       - Show this help message"
