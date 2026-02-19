@@ -1,6 +1,12 @@
 # Makefile for Pulse Project Tailwind CSS
 
-.PHONY: build build-prod watch clean help deploy_usa deploy_uk
+USA_IP ?= 35.166.88.10
+UK_IP ?= 3.9.199.170
+USA_USER ?= ubuntu
+UK_USER ?= ubuntu
+DATA_DUMP_URL ?= http://35.166.88.10:1971/dump
+
+.PHONY: build build-prod watch clean help deploy_usa deploy_uk data-download
 
 # Build Tailwind CSS (one-time)
 build:
@@ -27,10 +33,39 @@ clean:
 	@echo "✓ Cleaned"
 
 deploy_usa:
-	rsync --progress -avz --relative ./app/main.py ./app/config.json ./app/static/ ./app/templates/ ./icons/ ./*.toml ubuntu@35.166.88.10:~/pulse/
+	rsync --progress -avz --relative ./app/main.py ./app/config.json ./app/static/ ./app/templates/ ./icons/ ./*.toml $(USA_USER)@$(USA_IP):~/pulse/
 
 deploy_uk:
-	rsync --progress -avz --relative ./app/main.py ./app/config.json ./app/static/ ./app/templates/ ./icons/ ./*.toml ubuntu@3.9.199.170:~/pulse/
+	rsync --progress -avz --relative ./app/main.py ./app/config.json ./app/static/ ./app/templates/ ./icons/ ./*.toml $(UK_USER)@$(UK_IP):~/pulse/
+
+data-download:
+	@set -e; \
+	data_file="data/bp.ndjson"; \
+	backup_suffix=$$(date +%Y%m%d_%H%M%S); \
+	tmp_file=$$(mktemp); \
+	cleanup() { rm -f "$$tmp_file"; }; \
+	trap cleanup EXIT; \
+	curl -fsSL "$(DATA_DUMP_URL)" -o "$$tmp_file"; \
+	if [ ! -s "$$tmp_file" ]; then \
+		echo "Download failed or empty; keeping existing data."; \
+		exit 1; \
+	fi; \
+	count=0; \
+	while IFS= read -r line; do \
+		if [ -z "$$line" ]; then \
+			continue; \
+		fi; \
+		echo "$$line" | jq -e . >/dev/null || exit 1; \
+		count=$$((count + 1)); \
+	done < "$$tmp_file"; \
+	if [ "$$count" -eq 0 ]; then \
+		echo "Download is empty after filtering; keeping existing data."; \
+		exit 1; \
+	fi; \
+	if [ -f "$$data_file" ]; then \
+		mv "$$data_file" "$$data_file.backup.$$backup_suffix"; \
+	fi; \
+	mv "$$tmp_file" "$$data_file"
 
 # Help
 help:
@@ -41,4 +76,5 @@ help:
 	@echo "  make clean      - Clean build artifacts"
 	@echo "  make deploy_usa - Deploy to production server"
 	@echo "  make deploy_uk  - Deploy to production server"
+	@echo "  make data-download - Backup and download data from USA server"
 	@echo "  make help       - Show this help message"
