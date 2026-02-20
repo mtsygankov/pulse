@@ -138,6 +138,7 @@
   </div>
 </div>
 <script>
+(() => {
   // Timezone badge update functions
   function updateTimezoneBadge(tzName) {
     const badge = document.getElementById('tz-pill');
@@ -380,41 +381,51 @@
     }
   });
 
-  // Close on Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !tzModal.classList.contains('hidden')) {
-      tzModal.classList.add('hidden');
-    }
+  const pulseGlobal = window.__pulseGlobal || (window.__pulseGlobal = {
+    hasGlobalListeners: false
   });
 
-  // Re-render chart after HTMX swaps
-  document.body.addEventListener('htmx:afterSwap', function(evt) {
-    try {
-      const target = evt.detail && evt.detail.target;
-      if (target && target.id === 'page') {
-        // Re-initialize icon buttons
-        updateIconButtons();
-        
-        // Re-initialize timezone
-        const localTz = localStorage.getItem('local_tz') || '{{ current_timezone }}';
-        updateTimezoneBadge(localTz);
-        
-        // Re-render chart
-        const showPulse = JSON.parse(localStorage.getItem('showPulse') || 'true');
-        const meOnly = JSON.parse(localStorage.getItem('filter_me_only') || 'false');
-        const nightShadows = JSON.parse(localStorage.getItem('night_shadows') || 'false');
-        
-        // Update pulse columns
-        togglePulseColumns(showPulse);
-        
-        renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly), nightShadows: Boolean(nightShadows) })
-          .catch(err => {});
+  if (!pulseGlobal.hasGlobalListeners) {
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('tz-modal');
+      if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
       }
-    } catch (e) {
-      console.error('Error in htmx:afterSwap:', e);
-    }
-  });
+    });
 
+    // Re-render chart after HTMX swaps
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+      try {
+        const target = evt.detail && evt.detail.target;
+        if (target && target.id === 'page') {
+          // Re-initialize icon buttons
+          updateIconButtons();
+          
+          // Re-initialize timezone
+          const localTz = localStorage.getItem('local_tz') || '{{ current_timezone }}';
+          updateTimezoneBadge(localTz);
+          
+          // Re-render chart
+          const showPulse = JSON.parse(localStorage.getItem('showPulse') || 'true');
+          const meOnly = JSON.parse(localStorage.getItem('filter_me_only') || 'false');
+          const nightShadows = JSON.parse(localStorage.getItem('night_shadows') || 'false');
+          
+          // Update pulse columns
+          togglePulseColumns(showPulse);
+          
+          renderBPChart('bp-chart', { showPulse: Boolean(showPulse), meOnly: Boolean(meOnly), nightShadows: Boolean(nightShadows) })
+            .catch(err => {});
+        }
+      } catch (e) {
+        console.error('Error in htmx:afterSwap:', e);
+      }
+    });
+
+    pulseGlobal.hasGlobalListeners = true;
+  }
+
+})();
 </script>
 {% endblock %}
 
