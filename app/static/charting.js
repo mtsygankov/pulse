@@ -87,7 +87,7 @@ async function renderBPChart(containerId = 'bp-chart', options = {}) {
 
       // Morning: 7:00-13:00
       for (const item of arr) {
-        if (item.hour >= 7 && item.hour < 13) {
+        if (item.hour >= 7 && item.hour < 14) {
           morning.add(item.row.iso);
           break;
         }

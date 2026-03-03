@@ -197,7 +197,7 @@ def group_measurements_by_date(entries):
         # Sort by time
         measurements.sort(key=lambda x: x[0])
         # Morning: 7:00-13:00 (inclusive of 7:00, exclusive of 13:00)
-        morning_measurements = [m for m in measurements if 7 <= m[0].hour < 13]
+        morning_measurements = [m for m in measurements if 7 <= m[0].hour < 14]
 
         # Evening: 19:00-03:00 next day
         # Get measurements on current date with hour >= 19
