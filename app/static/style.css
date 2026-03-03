@@ -88,7 +88,7 @@
   color: white;
   border: none;
   border-radius: 6px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
   white-space: nowrap;
@@ -101,6 +101,110 @@
 }
 
 .btn-save:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Edit button - matches Save button size/font/shape with gray-to-blue hover */
+.btn-edit {
+  padding: 8px 16px;
+  background: #d1d5db;
+  color: #1f2937;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: var(--header-shadow);
+}
+
+.btn-edit:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-edit:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Back button - matches Edit button size/font/shape with gray hover */
+.btn-back {
+  padding: 8px 16px;
+  background: #d1d5db;
+  color: #1f2937;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: var(--header-shadow);
+}
+
+.btn-back:hover {
+  background: #9ca3af;
+  color: #1f2937;
+}
+
+.btn-back:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Add Entry button - gray with green hover */
+.btn-add {
+  padding: 8px 16px;
+  background: #d1d5db;
+  color: #1f2937;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: var(--header-shadow);
+}
+
+.btn-add:hover {
+  background: #16a34a;
+  color: white;
+}
+
+.btn-add:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Save Changes button - primary blue */
+.btn-save-changes {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: var(--header-shadow);
+}
+
+.btn-save-changes:hover {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-save-changes:focus {
   outline: none;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
@@ -220,7 +324,7 @@
   /* Position elements in single row */
   #btn-filter { grid-column: 1; grid-row: 1; }
   #btn-night { grid-column: 2; grid-row: 1; }
-  #btn-pulse { grid-column: 3; grid-row: 1; margin-right: 16px; }
+  #btn-pulse { grid-column: 3; grid-row: 1; }
 
   /* Hide title on desktop */
   .app-title-mobile {
@@ -294,10 +398,10 @@
 /* Timezone badge styles (reused for clickable pill) */
 .tz-badge {
   flex-shrink: 0;
-  padding: 5px 12px;
-  border-radius: 1rem;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 400;
   color: white;
   white-space: nowrap;
   line-height: 1;
@@ -394,5 +498,43 @@
   input[type="number"]:focus {
     border-color: #3b82f6 !important;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+  }
+
+  /* Edit button dark mode */
+  .btn-edit {
+    background: #374151;
+    color: #f3f4f6;
+  }
+
+  .btn-edit:hover {
+    background: #3b82f6;
+    color: white;
+  }
+
+  /* Back button dark mode */
+  .btn-back {
+    background: #374151;
+    color: #f3f4f6;
+  }
+
+  .btn-back:hover {
+    background: #6b7280;
+    color: #f3f4f6;
+  }
+
+  /* Add Entry button dark mode */
+  .btn-add {
+    background: #374151;
+    color: #f3f4f6;
+  }
+
+  .btn-add:hover {
+    background: #15803d;
+    color: white;
+  }
+
+  /* Save Changes button dark mode */
+  .btn-save-changes:hover {
+    background: #1d4ed8;
   }
 }
